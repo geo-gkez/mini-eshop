@@ -1,0 +1,19 @@
+# Secrets & local environment
+.env
+.env.*
+!.env.example
+
+# TLS material — generated locally, never commit
+nginx/certs/
+*.pem
+*.key
+*.crt
+*.p12
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+
+# OS / editor (backend/ has its own .gitignore for target & IDE files)
+.idea/
+.DS_Store
