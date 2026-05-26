@@ -1,25 +1,13 @@
 package gr.unipi.eshop.catalog;
 
 import gr.unipi.eshop.BaseIntegrationTest;
+import gr.unipi.eshop.auth.AuthTestSupport;
 import org.junit.jupiter.api.Test;
-
-import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 class CatalogTest extends BaseIntegrationTest {
-
-    private String loginAsAlice() {
-        return given().spec(requestSpec)
-                .body(Map.of("username", "alice", "password", "alicepass"))
-                .when()
-                .post("/api/auth/login")
-                .then()
-                .statusCode(200)
-                .extract()
-                .cookie("JSESSIONID");
-    }
 
     // --- unauthenticated ---
 
@@ -36,7 +24,7 @@ class CatalogTest extends BaseIntegrationTest {
 
     @Test
     void list_whenAuthenticated_returnsAllProductsWithSearchInactive() {
-        var session = loginAsAlice();
+        var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
@@ -53,7 +41,7 @@ class CatalogTest extends BaseIntegrationTest {
 
     @Test
     void list_pageSizeAboveMax_returns400() {
-        var session = loginAsAlice();
+        var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
@@ -68,7 +56,7 @@ class CatalogTest extends BaseIntegrationTest {
 
     @Test
     void search_whenQueryMatches_returnsFilteredProductsWithSearchActive() {
-        var session = loginAsAlice();
+        var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
@@ -83,7 +71,7 @@ class CatalogTest extends BaseIntegrationTest {
 
     @Test
     void search_whenNoMatch_returnsEmptyWithSearchActive() {
-        var session = loginAsAlice();
+        var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
@@ -98,7 +86,7 @@ class CatalogTest extends BaseIntegrationTest {
 
     @Test
     void search_sqlInjectionReturnsEmpty() {
-        var session = loginAsAlice();
+        var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
