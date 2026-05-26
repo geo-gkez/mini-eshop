@@ -1,6 +1,6 @@
 package gr.unipi.eshop.catalog;
 
-import gr.unipi.eshop.web.PageMeta;
+import gr.unipi.eshop.shared.PageMeta;
 
 import java.util.List;
 
