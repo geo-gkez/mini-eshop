@@ -2,6 +2,7 @@ package gr.unipi.eshop.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -15,6 +16,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 
 @Component
+@NullMarked
 public class JsonAuthHandlers implements AuthenticationEntryPoint, AccessDeniedHandler {
 
     private final JsonMapper jsonMapper;
