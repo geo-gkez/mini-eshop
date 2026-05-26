@@ -1,25 +1,91 @@
 package gr.unipi.eshop.config;
 
+import gr.unipi.eshop.auth.AppUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.security.web.context.DelegatingSecurityContextRepository;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
+import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter.Directive;
+import org.springframework.security.web.savedrequest.NullRequestCache;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+
+import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) {
+    public SecurityContextRepository securityContextRepository() {
+        return new DelegatingSecurityContextRepository(
+                new RequestAttributeSecurityContextRepository(),
+                new HttpSessionSecurityContextRepository()
+        );
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, JsonAuthHandlers authHandlers,
+                                           SecurityContextRepository securityContextRepository) {
         http
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
+                .securityContext(sc -> sc.securityContextRepository(securityContextRepository))
+                .csrf(AbstractHttpConfigurer::disable) // CookieCsrfTokenRepository wired in Phase 7
+                .logout(logout -> logout
+                        .logoutRequestMatcher(PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/logout"))
+                        .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler())
+                        .addLogoutHandler(new HeaderWriterLogoutHandler(new ClearSiteDataHeaderWriter(Directive.COOKIES)))
                 )
                 .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable);
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .requestCache(cache ->
+                        cache.requestCache(new NullRequestCache())
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authHandlers)
+                        .accessDeniedHandler(authHandlers)
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/**").authenticated()
+                        .anyRequest().permitAll()
+                );
 
         return http.build();
     }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AppUserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder) {
+        var provider = new DaoAuthenticationProvider(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+
+        return new ProviderManager(provider);
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        var argon2 = Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+
+        return new DelegatingPasswordEncoder(
+                "argon2@SpringSecurity_v5_8",
+                Map.of("argon2@SpringSecurity_v5_8", argon2)
+        );
+    }
+
 }
