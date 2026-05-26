@@ -4,5 +4,7 @@ import gr.unipi.eshop.web.PageMeta;
 
 import java.util.List;
 
-public record CatalogResponse(boolean searchActive, List<ProductSummary> products, PageMeta pagination) {
+public record CatalogResponse(boolean searchActive,
+                              List<ProductSummary> products,
+                              PageMeta pagination) {
 }

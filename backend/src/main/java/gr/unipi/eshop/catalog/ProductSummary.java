@@ -14,8 +14,12 @@ public record ProductSummary(
 ) {
     static ProductSummary from(Product p) {
         return new ProductSummary(
-                p.getReference(), p.getName(), p.getDescription(),
-                p.getPrice(), p.getCurrency(), p.getAttributes()
+                p.getReference(),
+                p.getName(),
+                p.getDescription(),
+                p.getPrice(),
+                p.getCurrency(),
+                p.getAttributes()
         );
     }
 }
