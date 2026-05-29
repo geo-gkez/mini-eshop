@@ -1,10 +1,15 @@
 package gr.unipi.eshop.config;
 
 import gr.unipi.eshop.auth.AppUserDetailsService;
+import gr.unipi.eshop.shared.LogFields;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,6 +32,7 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 
 import java.util.Map;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -47,6 +53,14 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable) // CookieCsrfTokenRepository wired in Phase 7
                 .logout(logout -> logout
                         .logoutRequestMatcher(PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/logout"))
+                        .addLogoutHandler((request, response, auth) -> {
+                            if (auth != null) {
+                                log.atInfo()
+                                        .addKeyValue(LogFields.Key.EVENT, LogFields.Event.LOGOUT)
+                                        .addKeyValue(LogFields.Key.USER, auth.getName())
+                                        .log("logout user={}", auth.getName());
+                            }
+                        })
                         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler())
                         .addLogoutHandler(new HeaderWriterLogoutHandler(new ClearSiteDataHeaderWriter(Directive.COOKIES)))
                 )
@@ -71,11 +85,20 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(
             AppUserDetailsService userDetailsService,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            AuthenticationEventPublisher eventPublisher) {
         var provider = new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
 
-        return new ProviderManager(provider);
+        var manager = new ProviderManager(provider);
+        manager.setAuthenticationEventPublisher(eventPublisher);
+
+        return manager;
+    }
+
+    @Bean
+    public AuthenticationEventPublisher authenticationEventPublisher(ApplicationEventPublisher publisher) {
+        return new DefaultAuthenticationEventPublisher(publisher);
     }
 
     @Bean

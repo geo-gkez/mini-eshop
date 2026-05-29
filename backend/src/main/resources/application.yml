@@ -30,14 +30,6 @@ server:
   tomcat:
     remoteip:
       internal-proxies: '172\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-    accesslog:
-      enabled: true
-      directory: /dev
-      prefix: stdout
-      suffix: ""
-      file-date-format: ""
-      buffered: false
-      pattern: '%h %t "%r" %s %b %D ms'
   servlet:
     session:
       cookie:
@@ -46,13 +38,23 @@ server:
         same-site: strict
       timeout: 15m
 
+logging:
+  pattern:
+    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
+  include-application-name: false
+  level:
+    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
+
 management:
+  tracing:
+    sampling:
+      probability: 1.0
   server:
     port: 8081
   endpoints:
     web:
       exposure:
-        include: health
+        include: health, loggers, metrics
   endpoint:
     health:
       show-details: always

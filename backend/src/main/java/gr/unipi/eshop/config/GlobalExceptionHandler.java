@@ -1,6 +1,8 @@
 package gr.unipi.eshop.config;
 
+import gr.unipi.eshop.shared.LogFields;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -26,6 +29,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ProblemDetail> handleConstraintViolation() {
+        log.atWarn().addKeyValue(LogFields.Key.EVENT, LogFields.Event.VALIDATION_FAILURE).log("constraint violation");
+
         var problemDetail = ProblemDetail.forStatus(BAD_REQUEST);
         problemDetail.setTitle(BAD_REQUEST.getReasonPhrase());
 
