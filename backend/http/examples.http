@@ -9,7 +9,11 @@ Content-Type: application/json
 
 > {%
 const cookie = response.headers.valuesOf("Set-Cookie").find(v => v.startsWith("JSESSIONID="));
-client.global.set("session", cookie.split(";")[0].replace("JSESSIONID=", ""));
+if (cookie) {
+    client.global.set("session", cookie.split(";")[0].replace("JSESSIONID=", ""));
+} else {
+    client.log("Login failed — no session cookie returned (check credentials)");
+}
 %}
 
 ### 2. Browse products — captures first product reference automatically
