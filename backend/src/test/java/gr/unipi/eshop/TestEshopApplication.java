@@ -1,11 +1,12 @@
 package gr.unipi.eshop;
 
+import gr.unipi.eshop.auth.DataInitializer;
 import org.springframework.boot.SpringApplication;
 
 public class TestEshopApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.from(EshopApplication::main).with(TestcontainersConfiguration.class).run(args);
-	}
+    static void main(String[] args) {
+        SpringApplication.from(EshopApplication::main).with(TestcontainersConfiguration.class, DataInitializer.class).run(args);
+    }
 
 }
