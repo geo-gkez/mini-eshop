@@ -53,7 +53,7 @@ public class SecurityConfig {
         // docs: servlet/authentication/session-management.html — session fixation / changeSessionId
         // docs: servlet/exploits/csrf.html#csrf-integration-javascript-spa — .spa() = CookieCsrfTokenRepository + SpaCsrfTokenRequestHandler
         // docs: servlet/authentication/logout.html — LogoutFilter, REST logout, ClearSiteData
-        http
+        return http
                 .securityContext(sc -> sc.securityContextRepository(securityContextRepository))
                 .csrf(CsrfConfigurer::spa)
                 .logout(logout -> logout
@@ -82,9 +82,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
-                );
-
-        return http.build();
+                )
+                .build();
     }
 
     @Bean

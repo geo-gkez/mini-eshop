@@ -3,6 +3,7 @@ package gr.unipi.eshop.config;
 import gr.unipi.eshop.shared.LogFields;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.http.HttpStatus;
@@ -20,13 +21,10 @@ import java.io.IOException;
 @Slf4j
 @Component
 @NullMarked
+@RequiredArgsConstructor
 public class JsonAuthHandlers implements AuthenticationEntryPoint, AccessDeniedHandler {
 
     private final JsonMapper jsonMapper;
-
-    public JsonAuthHandlers(JsonMapper jsonMapper) {
-        this.jsonMapper = jsonMapper;
-    }
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
