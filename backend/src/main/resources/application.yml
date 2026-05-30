@@ -1,3 +1,6 @@
+app:
+  shop-admin-email: ${SHOP_ADMIN_EMAIL:shop@example.com}
+
 spring:
   application:
     name: eshop
@@ -38,17 +41,7 @@ server:
         same-site: strict
       timeout: 15m
 
-logging:
-  pattern:
-    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
-  include-application-name: false
-  level:
-    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
-
 management:
-  tracing:
-    sampling:
-      probability: 1.0
   server:
     port: 8081
   endpoints:
@@ -58,3 +51,21 @@ management:
   endpoint:
     health:
       show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+
+spring.otlp:
+  metrics:
+    export:
+      url: http://${OTEL_HOST:localhost}:4318/v1/metrics
+
+spring.opentelemetry:
+  tracing:
+    export:
+      otlp:
+        endpoint: http://${OTEL_HOST:localhost}:4318/v1/traces
+  logging:
+    export:
+      otlp:
+        endpoint: http://${OTEL_HOST:localhost}:4318/v1/logs

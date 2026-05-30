@@ -5,7 +5,7 @@ import gr.unipi.eshop.catalog.Product;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-record CartItem(
+public record CartItem(
         UUID productReference,
         String name,
         BigDecimal price,

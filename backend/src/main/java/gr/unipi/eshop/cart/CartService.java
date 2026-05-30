@@ -88,4 +88,8 @@ public class CartService {
                 .addKeyValue(LogFields.Key.REF, reference)
                 .log("item removed ref={}", reference);
     }
+
+    public void clearCart(HttpSession session) {
+        session.removeAttribute(SESSION_KEY);
+    }
 }

@@ -58,3 +58,31 @@ Cookie: JSESSIONID={{session}}
 ### 8. Unauthenticated cart — expect 401 (explicit invalid session overrides cookie jar)
 GET http://localhost:8080/api/cart
 Cookie: JSESSIONID=invalid
+
+### 9. Submit order — returns review (stored in session, price locked)
+POST http://localhost:8080/api/order/submit
+Content-Type: application/json
+Cookie: JSESSIONID={{session}}
+
+{
+  "street": "123 Main St",
+  "city": "Athens",
+  "postalCode": "10432",
+  "country": "Greece"
+}
+
+### 10. Confirm order — sends email to admin, clears cart
+POST http://localhost:8080/api/order/confirm
+Cookie: JSESSIONID={{session}}
+
+### 11. Submit with CR/LF injection attempt — expect 400
+POST http://localhost:8080/api/order/submit
+Content-Type: application/json
+Cookie: JSESSIONID={{session}}
+
+{
+  "street": "123 Main St\r\nBcc: evil@example.com",
+  "city": "Athens",
+  "postalCode": "10432",
+  "country": "Greece"
+}
