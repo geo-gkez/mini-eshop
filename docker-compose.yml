@@ -1,4 +1,16 @@
 services:
+  grafana-lgtm:
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "3000:3000"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      GF_SECURITY_ADMIN_USER:     ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    networks:
+      - internal
+
   postgres:
     image: postgres:18
     environment:
@@ -36,10 +48,11 @@ services:
       MAIL_HOST:        ${MAIL_HOST:-mailpit}
       MAIL_PORT:        ${MAIL_PORT:-1025}
       MAIL_USER:        ${MAIL_USER:-}
-      MAIL_PASSWORD:    ${MAIL_PASSWORD:-}
+      MAIL_PASSWORD:    ${MAIL_PASSWORD}
       MAIL_SMTP_AUTH:   ${MAIL_SMTP_AUTH:-false}
       MAIL_STARTTLS:    ${MAIL_STARTTLS:-false}
       SHOP_ADMIN_EMAIL: ${SHOP_ADMIN_EMAIL}
+      OTEL_HOST:        grafana-lgtm
     networks:
       - internal
 
