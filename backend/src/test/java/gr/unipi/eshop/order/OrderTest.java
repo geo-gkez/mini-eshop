@@ -30,7 +30,9 @@ class OrderTest extends BaseIntegrationTest {
                         .cookie("JSESSIONID", session)
                         .when().get("/api/products")
                         .then().statusCode(200)
-                        .extract().jsonPath().getString("products[0].reference")
+                        .extract().
+                        jsonPath()
+                        .getString("products[0].reference")
         );
     }
 
@@ -38,8 +40,10 @@ class OrderTest extends BaseIntegrationTest {
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
                 .body(Map.of("productReference", ref.toString(), "quantity", 2))
-                .when().post("/api/cart/items")
-                .then().statusCode(201);
+                .when()
+                .post("/api/cart/items")
+                .then()
+                .statusCode(201);
     }
 
     private Map<String, String> validAddress() {
@@ -57,15 +61,19 @@ class OrderTest extends BaseIntegrationTest {
     void submit_whenUnauthenticated_returns401() {
         given().spec(requestSpec)
                 .body(validAddress())
-                .when().post("/api/order/submit")
-                .then().statusCode(401);
+                .when()
+                .post("/api/order/submit")
+                .then()
+                .statusCode(401);
     }
 
     @Test
     void confirm_whenUnauthenticated_returns401() {
         given().spec(requestSpec)
-                .when().post("/api/order/confirm")
-                .then().statusCode(401);
+                .when()
+                .post("/api/order/confirm")
+                .then()
+                .statusCode(401);
     }
 
     // --- validation ---
@@ -77,8 +85,10 @@ class OrderTest extends BaseIntegrationTest {
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
                 .body(validAddress())
-                .when().post("/api/order/submit")
-                .then().statusCode(400);
+                .when()
+                .post("/api/order/submit")
+                .then()
+                .statusCode(400);
     }
 
     @Test
@@ -95,8 +105,10 @@ class OrderTest extends BaseIntegrationTest {
                         "postalCode", "10432",
                         "country", "Greece"
                 ))
-                .when().post("/api/order/submit")
-                .then().statusCode(400);
+                .when()
+                .post("/api/order/submit")
+                .then()
+                .statusCode(400);
     }
 
     @Test
@@ -113,8 +125,10 @@ class OrderTest extends BaseIntegrationTest {
                         "postalCode", "10432",
                         "country", "Greece"
                 ))
-                .when().post("/api/order/submit")
-                .then().statusCode(400);
+                .when()
+                .post("/api/order/submit")
+                .then()
+                .statusCode(400);
     }
 
     @Test
@@ -123,7 +137,8 @@ class OrderTest extends BaseIntegrationTest {
 
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
-                .when().post("/api/order/confirm")
+                .when()
+                .post("/api/order/confirm")
                 .then().statusCode(400);
     }
 
@@ -138,7 +153,8 @@ class OrderTest extends BaseIntegrationTest {
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
                 .body(validAddress())
-                .when().post("/api/order/submit")
+                .when()
+                .post("/api/order/submit")
                 .then()
                 .statusCode(200)
                 .body("address.city", equalTo("Athens"))
@@ -157,13 +173,17 @@ class OrderTest extends BaseIntegrationTest {
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
                 .body(validAddress())
-                .when().post("/api/order/submit")
-                .then().statusCode(200);
+                .when()
+                .post("/api/order/submit")
+                .then()
+                .statusCode(200);
 
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
-                .when().post("/api/order/confirm")
-                .then().statusCode(204);
+                .when()
+                .post("/api/order/confirm")
+                .then()
+                .statusCode(204);
 
         // verify email was sent to admin
         assertThat(mailpitClient.getMessageCount(), equalTo(1));
@@ -174,7 +194,8 @@ class OrderTest extends BaseIntegrationTest {
         // cart must be cleared after confirm
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
-                .when().get("/api/cart")
+                .when()
+                .get("/api/cart")
                 .then()
                 .statusCode(200)
                 .body("items", hasSize(0));
@@ -189,18 +210,24 @@ class OrderTest extends BaseIntegrationTest {
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
                 .body(validAddress())
-                .when().post("/api/order/submit")
-                .then().statusCode(200);
+                .when()
+                .post("/api/order/submit")
+                .then()
+                .statusCode(200);
 
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
-                .when().post("/api/order/confirm")
-                .then().statusCode(204);
+                .when()
+                .post("/api/order/confirm")
+                .then()
+                .statusCode(204);
 
         // second confirm should fail — no pending order in session
         given().spec(requestSpec)
                 .cookie("JSESSIONID", session)
-                .when().post("/api/order/confirm")
-                .then().statusCode(400);
+                .when()
+                .post("/api/order/confirm")
+                .then()
+                .statusCode(400);
     }
 }

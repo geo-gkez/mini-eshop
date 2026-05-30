@@ -1,6 +1,17 @@
+### 0. Bootstrap CSRF — /me sets XSRF-TOKEN cookie (returns 401 when not logged in, that's fine)
+GET http://localhost:8080/api/auth/me
+
+> {%
+client.global.set("xsrf", response.headers.valuesOf("Set-Cookie")
+    .find(v => v.startsWith("XSRF-TOKEN="))
+    ?.split(";")[0]
+    ?.replace("XSRF-TOKEN=", "") ?? "");
+%}
+
 ### 1. Login — captures session automatically
 POST http://localhost:8080/api/auth/login
 Content-Type: application/json
+X-XSRF-TOKEN: {{xsrf}}
 
 {
   "username": "alice",
@@ -13,6 +24,11 @@ if (cookie) {
     client.global.set("session", cookie.split(";")[0].replace("JSESSIONID=", ""));
 } else {
     client.log("Login failed — no session cookie returned (check credentials)");
+}
+// After login Spring rotates the CSRF token — re-bootstrap before next mutating request
+const xsrf = response.headers.valuesOf("Set-Cookie").find(v => v.startsWith("XSRF-TOKEN="));
+if (xsrf) {
+    client.global.set("xsrf", xsrf.split(";")[0].replace("XSRF-TOKEN=", ""));
 }
 %}
 
@@ -36,6 +52,7 @@ Cookie: JSESSIONID={{session}}
 POST http://localhost:8080/api/cart/items
 Content-Type: application/json
 Cookie: JSESSIONID={{session}}
+X-XSRF-TOKEN: {{xsrf}}
 
 {
   "productReference": "{{productRef}}",
@@ -46,6 +63,7 @@ Cookie: JSESSIONID={{session}}
 PATCH http://localhost:8080/api/cart/items/{{productRef}}
 Content-Type: application/json
 Cookie: JSESSIONID={{session}}
+X-XSRF-TOKEN: {{xsrf}}
 
 {
   "quantity": 5
@@ -54,6 +72,7 @@ Cookie: JSESSIONID={{session}}
 ### 7. Remove item from cart
 DELETE http://localhost:8080/api/cart/items/{{productRef}}
 Cookie: JSESSIONID={{session}}
+X-XSRF-TOKEN: {{xsrf}}
 
 ### 8. Unauthenticated cart — expect 401 (explicit invalid session overrides cookie jar)
 GET http://localhost:8080/api/cart
@@ -63,6 +82,7 @@ Cookie: JSESSIONID=invalid
 POST http://localhost:8080/api/order/submit
 Content-Type: application/json
 Cookie: JSESSIONID={{session}}
+X-XSRF-TOKEN: {{xsrf}}
 
 {
   "street": "123 Main St",
@@ -74,15 +94,26 @@ Cookie: JSESSIONID={{session}}
 ### 10. Confirm order — sends email to admin, clears cart
 POST http://localhost:8080/api/order/confirm
 Cookie: JSESSIONID={{session}}
+X-XSRF-TOKEN: {{xsrf}}
 
 ### 11. Submit with CR/LF injection attempt — expect 400
 POST http://localhost:8080/api/order/submit
 Content-Type: application/json
 Cookie: JSESSIONID={{session}}
+X-XSRF-TOKEN: {{xsrf}}
 
 {
   "street": "123 Main St\r\nBcc: evil@example.com",
   "city": "Athens",
   "postalCode": "10432",
   "country": "Greece"
+}
+
+### 12. POST without CSRF token — expect 403
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "alice",
+  "password": "alicepass"
 }

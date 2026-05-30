@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -49,7 +50,8 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserInfo> me(@CurrentUser UserDetails userDetails) {
+    public ResponseEntity<UserInfo> me(@CurrentUser UserDetails userDetails,
+                                       CsrfToken csrfToken) { // resolved by Spring MVC to force XSRF-TOKEN cookie write on every call
         if (userDetails == null) {
             throw new InsufficientAuthenticationException("Not authenticated");
         }

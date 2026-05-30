@@ -15,6 +15,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,9 +49,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JsonAuthHandlers authHandlers,
                                            SecurityContextRepository securityContextRepository) {
+        // docs: servlet/authentication/persistence.html — SecurityContextRepository / explicit save
+        // docs: servlet/authentication/session-management.html — session fixation / changeSessionId
+        // docs: servlet/exploits/csrf.html#csrf-integration-javascript-spa — .spa() = CookieCsrfTokenRepository + SpaCsrfTokenRequestHandler
+        // docs: servlet/authentication/logout.html — LogoutFilter, REST logout, ClearSiteData
         http
                 .securityContext(sc -> sc.securityContextRepository(securityContextRepository))
-                .csrf(AbstractHttpConfigurer::disable) // CookieCsrfTokenRepository wired in Phase 7
+                .csrf(CsrfConfigurer::spa)
                 .logout(logout -> logout
                         .logoutRequestMatcher(PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/logout"))
                         .addLogoutHandler((request, response, auth) -> {
