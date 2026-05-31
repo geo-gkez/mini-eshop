@@ -24,7 +24,8 @@ public class JsonAuthHandlers implements AuthenticationEntryPoint, AccessDeniedH
     private final ProblemDetailWriter writer;
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response,
+    public void commence(HttpServletRequest request,
+                         HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
         log.atWarn()
                 .addKeyValue(LogFields.Key.EVENT, LogFields.Event.UNAUTHENTICATED_ACCESS)
@@ -34,7 +35,8 @@ public class JsonAuthHandlers implements AuthenticationEntryPoint, AccessDeniedH
     }
 
     @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response,
+    public void handle(HttpServletRequest request,
+                       HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException {
         log.atWarn()
                 .addKeyValue(LogFields.Key.EVENT, LogFields.Event.ACCESS_DENIED)
