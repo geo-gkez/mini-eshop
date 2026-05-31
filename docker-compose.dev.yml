@@ -1,0 +1,28 @@
+# Development-only services — UI tools for inspecting Redis and PostgreSQL.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# RedisInsight:  http://localhost:5540
+# pgAdmin:       http://localhost:5050  (login: PGADMIN_EMAIL / PGADMIN_PASSWORD from .env)
+
+services:
+  redisinsight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    networks:
+      - internal
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL:    ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal

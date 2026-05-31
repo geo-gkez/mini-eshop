@@ -16,6 +16,11 @@
       </v-col>
     </v-row>
 
+    <p class="text-caption text-medium-emphasis mb-4">
+      <span v-if="searched">Search results for "{{ activeSearch }}"</span>
+      <span v-else>Showing all products</span>
+    </p>
+
     <v-alert v-if="addError" type="error" density="compact" closable class="mb-4"
       @click:close="addError = null">{{ addError }}</v-alert>
 
@@ -60,7 +65,9 @@
     </template>
 
     <v-row justify="end" class="mt-6">
-      <v-btn color="secondary" prepend-icon="mdi-cart" @click="$emit('go-cart')">View Cart</v-btn>
+      <v-btn color="secondary" prepend-icon="mdi-cart" @click="$emit('go-cart')">
+        View Cart<span v-if="cartCount > 0"> ({{ cartCount }})</span>
+      </v-btn>
     </v-row>
   </div>
 </template>
@@ -69,9 +76,15 @@
 import { ref, onMounted } from 'vue'
 import { api } from '../api/client.js'
 
-defineEmits(['go-cart'])
+const props = defineProps({
+  cartCount: { type: Number, default: 0 },
+})
+
+const emit = defineEmits(['go-cart', 'cart-changed'])
 
 const search = ref('')
+const activeSearch = ref('')
+const searched = ref(false)
 const products = ref([])
 const page = ref(1)
 const totalPages = ref(1)
@@ -93,6 +106,8 @@ async function fetchProducts(p = page.value) {
     const data = await api(`/products?${params}`)
     products.value = data.products
     totalPages.value = data.pagination.totalPages
+    searched.value = data.searchActive
+    activeSearch.value = data.searchTerm
   } catch {
     addError.value = 'Failed to load products.'
   } finally {
@@ -115,6 +130,7 @@ async function addToCart(product) {
     })
     snackbarMsg.value = `"${product.name}" added to cart.`
     snackbar.value = true
+    emit('cart-changed')
   } catch (e) {
     addError.value = e.body?.detail ?? 'Could not add to cart.'
   } finally {

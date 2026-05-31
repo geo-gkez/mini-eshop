@@ -3,7 +3,9 @@
     <v-app-bar v-if="user" color="primary" density="compact">
       <v-toolbar-title>E-Shop</v-toolbar-title>
       <v-btn variant="text" @click="view = 'catalog'">Catalog</v-btn>
-      <v-btn variant="text" @click="view = 'cart'">Cart</v-btn>
+      <v-badge :content="cartCount" :model-value="cartCount > 0" color="error" floating>
+        <v-btn variant="text" prepend-icon="mdi-cart" @click="view = 'cart'">Cart</v-btn>
+      </v-badge>
       <v-spacer />
       <v-btn variant="text" prepend-icon="mdi-account">{{ user }}</v-btn>
       <v-btn variant="text" icon="mdi-logout" @click="doLogout" />
@@ -12,7 +14,12 @@
     <v-main>
       <v-container class="py-6">
         <LoginView v-if="!user" @logged-in="onLogin" />
-        <CatalogView v-else-if="view === 'catalog'" @go-cart="view = 'cart'" />
+        <CatalogView
+          v-else-if="view === 'catalog'"
+          :cart-count="cartCount"
+          @go-cart="view = 'cart'"
+          @cart-changed="loadCartCount"
+        />
         <CartView v-else-if="view === 'cart'" @go-catalog="view = 'catalog'" @go-order="view = 'order'" />
         <OrderView v-else-if="view === 'order'" @confirmed="onConfirmed" @back="view = 'cart'" />
       </v-container>
@@ -30,11 +37,13 @@ import OrderView from './views/OrderView.vue'
 
 const user = ref(null)
 const view = ref('catalog')
+const cartCount = ref(0)
 
 onMounted(async () => {
   try {
     const data = await api('/auth/me')
     user.value = data.username
+    await loadCartCount()
   } catch {
     // 401 = not authenticated yet; XSRF-TOKEN cookie is written regardless
   }
@@ -45,7 +54,17 @@ async function onLogin() {
   // (CsrfAuthenticationStrategy clears the old token; /me forces the deferred cookie write)
   const data = await api('/auth/me')
   user.value = data.username
+  await loadCartCount()
   view.value = 'catalog'
+}
+
+async function loadCartCount() {
+  try {
+    const data = await api('/cart')
+    cartCount.value = data.items.reduce((sum, item) => sum + item.quantity, 0)
+  } catch {
+    cartCount.value = 0
+  }
 }
 
 async function doLogout() {
@@ -53,11 +72,13 @@ async function doLogout() {
     await api('/auth/logout', { method: 'POST' })
   } finally {
     user.value = null
+    cartCount.value = 0
     view.value = 'catalog'
   }
 }
 
 function onConfirmed() {
+  cartCount.value = 0
   view.value = 'catalog'
 }
 </script>

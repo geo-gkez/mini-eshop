@@ -34,6 +34,11 @@ services:
     networks:
       - internal
 
+  redis:
+    image: redis:8-alpine
+    networks:
+      - internal
+
   backend:
     build: ./backend
     depends_on:
@@ -52,6 +57,7 @@ services:
       MAIL_SMTP_AUTH:   ${MAIL_SMTP_AUTH:-false}
       MAIL_STARTTLS:    ${MAIL_STARTTLS:-false}
       SHOP_ADMIN_EMAIL: ${SHOP_ADMIN_EMAIL}
+      REDIS_HOST:       redis
       OTEL_HOST:        grafana-lgtm
     networks:
       - internal
@@ -67,6 +73,7 @@ services:
       - ./nginx/certs:/etc/nginx/certs:ro
     depends_on:
       - backend
+      - redis
     networks:
       - internal
 
