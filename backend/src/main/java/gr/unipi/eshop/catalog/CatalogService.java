@@ -44,6 +44,6 @@ public class CatalogService {
                 .addKeyValue(LogFields.Key.SIZE, size)
                 .log("catalog list search={} page={} size{}", searched ? search : "", page, size);
 
-        return new CatalogResponse(searched, products, pagination);
+        return new CatalogResponse(searched, term, products, pagination);
     }
 }

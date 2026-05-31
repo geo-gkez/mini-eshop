@@ -2,6 +2,7 @@ package gr.unipi.eshop.auth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.http.MediaType;
@@ -23,30 +24,41 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
+    private final LoginRateLimiter loginRateLimiter;
     private final SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder.getContextHolderStrategy();
 
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserInfo> login(@RequestBody LoginRequest loginRequest,
+    public ResponseEntity<UserInfo> login(@Valid @RequestBody LoginRequest loginRequest,
                                           HttpServletRequest request,
                                           HttpServletResponse response) {
-        var auth = authenticationManager.authenticate(
-                UsernamePasswordAuthenticationToken.unauthenticated(
-                        loginRequest.username(), loginRequest.password()
-                )
-        );
+        // request.getRemoteAddr() returns the real client IP because Tomcat's RemoteIpValve
+        // reads X-Forwarded-For set by nginx (internal-proxies matches 172.x.x.x Docker range)
+        loginRateLimiter.checkLimit(loginRequest.username(), request.getRemoteAddr());
 
-        var context = securityContextHolderStrategy.createEmptyContext();
-        context.setAuthentication(auth);
+        try {
+            var auth = authenticationManager.authenticate(
+                    UsernamePasswordAuthenticationToken.unauthenticated(
+                            loginRequest.username(), loginRequest.password()
+                    )
+            );
 
-        securityContextHolderStrategy.setContext(context);
+            loginRateLimiter.onSuccess(loginRequest.username());
 
-        // Save first (creates/updates session), then rotate ID for session-fixation defence.
-        // changeSessionId() preserves session data while issuing a new session token.
-        securityContextRepository.saveContext(context, request, response);
+            var context = securityContextHolderStrategy.createEmptyContext();
+            context.setAuthentication(auth);
+            securityContextHolderStrategy.setContext(context);
 
-        request.changeSessionId();
+            // Save first (creates/updates session), then rotate ID for session-fixation defence.
+            // changeSessionId() preserves session data while issuing a new session token.
+            securityContextRepository.saveContext(context, request, response);
+            request.changeSessionId();
 
-        return ResponseEntity.ok(new UserInfo(auth.getName()));
+            return ResponseEntity.ok(new UserInfo(auth.getName()));
+
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            loginRateLimiter.onFailure(loginRequest.username(), request.getRemoteAddr());
+            throw e;
+        }
     }
 
     @GetMapping("/me")

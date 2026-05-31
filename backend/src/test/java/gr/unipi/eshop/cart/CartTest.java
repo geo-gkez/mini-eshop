@@ -15,7 +15,7 @@ class CartTest extends BaseIntegrationTest {
     private UUID anyProductReference(String session) {
         return UUID.fromString(
                 given().spec(requestSpec)
-                        .cookie("JSESSIONID", session)
+                        .cookie(AuthTestSupport.SESSION_COOKIE, session)
                         .when().get("/api/products")
                         .then().statusCode(200)
                         .extract().jsonPath().getString("products[0].reference")
@@ -40,7 +40,7 @@ class CartTest extends BaseIntegrationTest {
         var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .when()
                 .get("/api/cart")
                 .then()
@@ -57,7 +57,7 @@ class CartTest extends BaseIntegrationTest {
         var ref = anyProductReference(session);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of("productReference", ref.toString(), "quantity", 2))
                 .when()
                 .post("/api/cart/items")
@@ -72,7 +72,7 @@ class CartTest extends BaseIntegrationTest {
         var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of("productReference", UUID.randomUUID().toString(), "quantity", 1))
                 .when()
                 .post("/api/cart/items")
@@ -86,7 +86,7 @@ class CartTest extends BaseIntegrationTest {
         var ref = anyProductReference(session);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of("productReference", ref.toString(), "quantity", 0))
                 .when()
                 .post("/api/cart/items")
@@ -99,7 +99,7 @@ class CartTest extends BaseIntegrationTest {
         var ref = anyProductReference(session);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of("productReference", ref.toString(), "quantity", 1))
                 .when()
                 .post("/api/cart/items")
@@ -107,7 +107,7 @@ class CartTest extends BaseIntegrationTest {
                 statusCode(201);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of("productReference", ref.toString(), "quantity", 2))
                 .when()
                 .post("/api/cart/items")
@@ -125,13 +125,13 @@ class CartTest extends BaseIntegrationTest {
         var ref = anyProductReference(session);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of("productReference", ref.toString(), "quantity", 1))
                 .when()
                 .post("/api/cart/items").then().statusCode(201);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of("quantity", 5))
                 .when()
                 .patch("/api/cart/items/" + ref)
@@ -145,7 +145,7 @@ class CartTest extends BaseIntegrationTest {
         var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of("quantity", 1))
                 .when()
                 .patch("/api/cart/items/" + UUID.randomUUID())
@@ -161,19 +161,19 @@ class CartTest extends BaseIntegrationTest {
         var ref = anyProductReference(session);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of("productReference", ref.toString(), "quantity", 1))
                 .when()
                 .post("/api/cart/items").then().statusCode(201);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .when()
                 .delete("/api/cart/items/" + ref)
                 .then().statusCode(204);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .when()
                 .get("/api/cart")
                 .then()
@@ -186,33 +186,63 @@ class CartTest extends BaseIntegrationTest {
         var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .when()
                 .delete("/api/cart/items/" + UUID.randomUUID())
                 .then()
                 .statusCode(404);
     }
 
-    // --- session isolation ---
+    // --- user isolation ---
 
     @Test
-    void cart_isSessionScoped_aliceAndBobHaveSeparateCarts() {
+    void cart_isUserScoped_aliceAndBobHaveSeparateCarts() {
         var aliceSession = AuthTestSupport.loginAsAlice(requestSpec);
         var bobSession = AuthTestSupport.loginAsBob(requestSpec);
         var ref = anyProductReference(aliceSession);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", aliceSession)
+                .cookie(AuthTestSupport.SESSION_COOKIE, aliceSession)
                 .body(Map.of("productReference", ref.toString(), "quantity", 1))
                 .when()
                 .post("/api/cart/items").then().statusCode(201);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", bobSession)
+                .cookie(AuthTestSupport.SESSION_COOKIE, bobSession)
                 .when()
                 .get("/api/cart")
                 .then()
                 .statusCode(200)
                 .body("items", hasSize(0));
+    }
+
+    // --- persistence across sessions (the point of the DB-backed cart) ---
+
+    @Test
+    void cart_persistsAcrossLogoutAndLogin() {
+        var firstSession = AuthTestSupport.loginAsAlice(requestSpec);
+        var ref = anyProductReference(firstSession);
+
+        given().spec(requestSpec)
+                .cookie(AuthTestSupport.SESSION_COOKIE, firstSession)
+                .body(Map.of("productReference", ref.toString(), "quantity", 3))
+                .when()
+                .post("/api/cart/items").then().statusCode(201);
+
+        // Log out, then log in again — a brand-new session.
+        given().spec(requestSpec)
+                .cookie(AuthTestSupport.SESSION_COOKIE, firstSession)
+                .when().post("/api/auth/logout").then().statusCode(200);
+
+        var secondSession = AuthTestSupport.loginAsAlice(requestSpec);
+
+        given().spec(requestSpec)
+                .cookie(AuthTestSupport.SESSION_COOKIE, secondSession)
+                .when()
+                .get("/api/cart")
+                .then()
+                .statusCode(200)
+                .body("items", hasSize(1))
+                .body("items[0].quantity", equalTo(3));
     }
 }

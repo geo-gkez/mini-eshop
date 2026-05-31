@@ -27,7 +27,7 @@ class OrderTest extends BaseIntegrationTest {
     private UUID anyProductReference(String session) {
         return UUID.fromString(
                 given().spec(requestSpec)
-                        .cookie("JSESSIONID", session)
+                        .cookie(AuthTestSupport.SESSION_COOKIE, session)
                         .when().get("/api/products")
                         .then().statusCode(200)
                         .extract().
@@ -38,7 +38,7 @@ class OrderTest extends BaseIntegrationTest {
 
     private void addItemToCart(String session, UUID ref) {
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of("productReference", ref.toString(), "quantity", 2))
                 .when()
                 .post("/api/cart/items")
@@ -83,7 +83,7 @@ class OrderTest extends BaseIntegrationTest {
         var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(validAddress())
                 .when()
                 .post("/api/order/submit")
@@ -98,7 +98,7 @@ class OrderTest extends BaseIntegrationTest {
         addItemToCart(session, ref);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of(
                         "street", "123 Main St\r\nBcc: evil@example.com",
                         "city", "Athens",
@@ -118,7 +118,7 @@ class OrderTest extends BaseIntegrationTest {
         addItemToCart(session, ref);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of(
                         "street", "123 Main St",
                         "city", "Athens\nevil",
@@ -136,7 +136,7 @@ class OrderTest extends BaseIntegrationTest {
         var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .when()
                 .post("/api/order/confirm")
                 .then().statusCode(400);
@@ -151,7 +151,7 @@ class OrderTest extends BaseIntegrationTest {
         addItemToCart(session, ref);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(validAddress())
                 .when()
                 .post("/api/order/submit")
@@ -171,7 +171,7 @@ class OrderTest extends BaseIntegrationTest {
         addItemToCart(session, ref);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(validAddress())
                 .when()
                 .post("/api/order/submit")
@@ -179,7 +179,7 @@ class OrderTest extends BaseIntegrationTest {
                 .statusCode(200);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .when()
                 .post("/api/order/confirm")
                 .then()
@@ -193,7 +193,7 @@ class OrderTest extends BaseIntegrationTest {
 
         // cart must be cleared after confirm
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .when()
                 .get("/api/cart")
                 .then()
@@ -208,7 +208,7 @@ class OrderTest extends BaseIntegrationTest {
         addItemToCart(session, ref);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(validAddress())
                 .when()
                 .post("/api/order/submit")
@@ -216,7 +216,7 @@ class OrderTest extends BaseIntegrationTest {
                 .statusCode(200);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .when()
                 .post("/api/order/confirm")
                 .then()
@@ -224,7 +224,7 @@ class OrderTest extends BaseIntegrationTest {
 
         // second confirm should fail — no pending order in session
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .when()
                 .post("/api/order/confirm")
                 .then()

@@ -8,6 +8,9 @@ import static io.restassured.RestAssured.given;
 
 public class AuthTestSupport {
 
+    /** Spring Session's default session cookie name (DefaultCookieSerializer); replaces the servlet container's JSESSIONID. */
+    public static final String SESSION_COOKIE = "SESSION";
+
     public static String loginAsAlice(RequestSpecification requestSpec) {
         return login(requestSpec, "alice", "alicepass");
     }
@@ -21,6 +24,6 @@ public class AuthTestSupport {
                 .body(Map.of("username", username, "password", password))
                 .when().post("/api/auth/login")
                 .then().statusCode(200)
-                .extract().cookie("JSESSIONID");
+                .extract().cookie(SESSION_COOKIE);
     }
 }

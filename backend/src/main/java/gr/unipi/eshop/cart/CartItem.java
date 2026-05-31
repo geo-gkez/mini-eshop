@@ -23,15 +23,4 @@ public record CartItem(
                 product.getPrice().multiply(BigDecimal.valueOf(quantity))
         );
     }
-
-    CartItem withQuantity(int newQuantity) {
-        return new CartItem(
-                productReference,
-                name,
-                price,
-                currency,
-                newQuantity,
-                price.multiply(BigDecimal.valueOf(newQuantity))
-        );
-    }
 }

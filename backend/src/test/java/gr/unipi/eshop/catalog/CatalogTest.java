@@ -27,7 +27,7 @@ class CatalogTest extends BaseIntegrationTest {
         var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .when()
                 .get("/api/products")
                 .then()
@@ -44,7 +44,7 @@ class CatalogTest extends BaseIntegrationTest {
         var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .queryParam("size", 1000)
                 .when()
                 .get("/api/products")
@@ -59,7 +59,7 @@ class CatalogTest extends BaseIntegrationTest {
         var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .queryParam("search","Keyboard")
                 .when()
                 .get("/api/products")
@@ -74,7 +74,7 @@ class CatalogTest extends BaseIntegrationTest {
         var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .queryParam("search","zzznotexisting")
                 .when()
                 .get("/api/products")
@@ -89,7 +89,7 @@ class CatalogTest extends BaseIntegrationTest {
         var session = AuthTestSupport.loginAsAlice(requestSpec);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", session)
+                .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .queryParam("search","' OR '1'='1")
                 .when()
                 .get("/api/products")

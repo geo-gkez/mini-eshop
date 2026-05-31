@@ -1,7 +1,6 @@
 package gr.unipi.eshop.order;
 
 import gr.unipi.eshop.auth.CurrentUser;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
@@ -24,13 +23,13 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping(value = "/submit", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<OrderReview> submit(@RequestBody @Valid ShippingAddress address, HttpSession session) {
-        return ResponseEntity.ok(orderService.submit(session, address));
+    public ResponseEntity<OrderReview> submit(@RequestBody @Valid ShippingAddress address, @CurrentUser UserDetails user) {
+        return ResponseEntity.ok(orderService.submit(user.getUsername(), address));
     }
 
     @PostMapping("/confirm")
-    public ResponseEntity<Void> confirm(HttpSession session, @CurrentUser UserDetails user) {
-        orderService.confirm(session, user.getUsername());
+    public ResponseEntity<Void> confirm(@CurrentUser UserDetails user) {
+        orderService.confirm(user.getUsername());
         return ResponseEntity.noContent().build();
     }
 }

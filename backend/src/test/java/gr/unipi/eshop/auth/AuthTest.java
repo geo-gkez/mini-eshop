@@ -61,17 +61,17 @@ class AuthTest extends BaseIntegrationTest {
                 .then()
                 .statusCode(200)
                 .extract()
-                .cookie("JSESSIONID");
+                .cookie(AuthTestSupport.SESSION_COOKIE);
 
         // Re-login with that session: ID must be rotated (session-fixation defence).
         String rotatedSession = given().spec(requestSpec)
-                .cookie("JSESSIONID", firstSession)
+                .cookie(AuthTestSupport.SESSION_COOKIE, firstSession)
                 .body(Map.of("username", "alice", "password", "alicepass"))
                 .when()
                 .post("/api/auth/login")
                 .then()
                 .statusCode(200)
-                .extract().cookie("JSESSIONID");
+                .extract().cookie(AuthTestSupport.SESSION_COOKIE);
 
         assertThat(rotatedSession).isNotNull().isNotEqualTo(firstSession);
     }
@@ -96,10 +96,10 @@ class AuthTest extends BaseIntegrationTest {
                 .then()
                 .statusCode(200)
                 .extract()
-                .cookie("JSESSIONID");
+                .cookie(AuthTestSupport.SESSION_COOKIE);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", sessionCookie)
+                .cookie(AuthTestSupport.SESSION_COOKIE, sessionCookie)
                 .when()
                 .get("/api/auth/me")
                 .then()
@@ -118,10 +118,10 @@ class AuthTest extends BaseIntegrationTest {
                 .then()
                 .statusCode(200)
                 .extract()
-                .cookie("JSESSIONID");
+                .cookie(AuthTestSupport.SESSION_COOKIE);
 
         given().spec(requestSpec)
-                .cookie("JSESSIONID", sessionCookie)
+                .cookie(AuthTestSupport.SESSION_COOKIE, sessionCookie)
                 .when()
                 .post("/api/auth/logout")
                 .then()
@@ -129,7 +129,7 @@ class AuthTest extends BaseIntegrationTest {
 
         // Old session must no longer grant access to protected resources.
         given().spec(requestSpec)
-                .cookie("JSESSIONID", sessionCookie)
+                .cookie(AuthTestSupport.SESSION_COOKIE, sessionCookie)
                 .when()
                 .get("/api/products")
                 .then()

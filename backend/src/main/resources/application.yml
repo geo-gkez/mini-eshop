@@ -1,9 +1,23 @@
 app:
-  shop-admin-email: ${SHOP_ADMIN_EMAIL:shop@example.com}
+  order:
+    admin-email: ${SHOP_ADMIN_EMAIL:shop@example.com}
+  session:
+    absolute-timeout: 8h
 
 spring:
   application:
     name: eshop
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  session:
+    data:
+      redis:
+        flush-mode: on-save
+        configure-action: notify-keyspace-events
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:eshop}

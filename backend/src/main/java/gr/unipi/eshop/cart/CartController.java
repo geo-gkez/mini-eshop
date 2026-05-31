@@ -1,12 +1,13 @@
 package gr.unipi.eshop.cart;
 
-import jakarta.servlet.http.HttpSession;
+import gr.unipi.eshop.auth.CurrentUser;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,28 +23,28 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping
-    public ResponseEntity<CartResponse> view(HttpSession session) {
-        return ResponseEntity.ok(cartService.view(session));
+    public ResponseEntity<CartResponse> view(@CurrentUser UserDetails user) {
+        return ResponseEntity.ok(cartService.view(user.getUsername()));
     }
 
     @PostMapping(value = "/items", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CartResponse> addItem(@RequestBody @Valid AddItemRequest addItemRequest,
-                                                HttpSession session) {
+                                                @CurrentUser UserDetails user) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(cartService.addItem(session, addItemRequest.productReference(), addItemRequest.quantity()));
+                .body(cartService.addItem(user.getUsername(), addItemRequest.productReference(), addItemRequest.quantity()));
     }
 
     @PatchMapping(value = "/items/{reference}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CartResponse> updateItem(@PathVariable UUID reference,
                                                    @RequestBody @Valid UpdateItemRequest updateItemRequest,
-                                                   HttpSession session) {
-        return ResponseEntity.ok(cartService.updateItem(session, reference, updateItemRequest.quantity()));
+                                                   @CurrentUser UserDetails user) {
+        return ResponseEntity.ok(cartService.updateItem(user.getUsername(), reference, updateItemRequest.quantity()));
     }
 
     @DeleteMapping("/items/{reference}")
-    public ResponseEntity<Void> removeItem(@PathVariable UUID reference, HttpSession session) {
-        cartService.removeItem(session, reference);
+    public ResponseEntity<Void> removeItem(@PathVariable UUID reference, @CurrentUser UserDetails user) {
+        cartService.removeItem(user.getUsername(), reference);
 
         return ResponseEntity.noContent().build();
     }

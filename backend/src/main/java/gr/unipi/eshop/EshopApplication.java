@@ -2,8 +2,10 @@ package gr.unipi.eshop;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 @SpringBootApplication
+@ConfigurationPropertiesScan
 public class EshopApplication {
 
 	public static void main(String[] args) {

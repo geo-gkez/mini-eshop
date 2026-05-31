@@ -4,6 +4,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import ch.martinelli.oss.testcontainers.mailpit.MailpitContainer;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -20,6 +21,13 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     MailpitContainer mailpitContainer() {
         return new MailpitContainer(DockerImageName.parse("axllent/mailpit:latest"));
+    }
+
+    @Bean
+    @ServiceConnection(name = "redis")
+    GenericContainer<?> redisContainer() {
+        return new GenericContainer<>(DockerImageName.parse("redis:8-alpine"))
+                .withExposedPorts(6379);
     }
 
 }

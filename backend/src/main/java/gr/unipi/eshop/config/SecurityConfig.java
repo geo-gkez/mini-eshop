@@ -7,6 +7,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
@@ -30,6 +31,7 @@ import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter
 import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter.Directive;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 import java.util.Map;
 
@@ -47,14 +49,25 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JsonAuthHandlers authHandlers,
-                                           SecurityContextRepository securityContextRepository) {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           JsonAuthHandlers authHandlers,
+                                           SecurityContextRepository securityContextRepository,
+                                           ProblemDetailWriter writer) {
         // docs: servlet/authentication/persistence.html — SecurityContextRepository / explicit save
-        // docs: servlet/authentication/session-management.html — session fixation / changeSessionId
+        // docs: servlet/authentication/session-management.html — session fixation / changeSessionId / maximumSessions
         // docs: servlet/exploits/csrf.html#csrf-integration-javascript-spa — .spa() = CookieCsrfTokenRepository + SpaCsrfTokenRequestHandler
         // docs: servlet/authentication/logout.html — LogoutFilter, REST logout, ClearSiteData
         return http
                 .securityContext(sc -> sc.securityContextRepository(securityContextRepository))
+                .sessionManagement(session ->
+                        // Allow only one active session per user — new login expires the oldest.
+                        // Expired or missing sessions fall through to AuthenticationEntryPoint (401 JSON).
+                        // docs: servlet/authentication/session-management.html#ns-concurrent-sessions
+                        session.sessionConcurrency(concurrency -> concurrency
+                                .maximumSessions(1)
+                                .expiredSessionStrategy(event ->
+                                        writer.write(event.getResponse(), HttpStatus.UNAUTHORIZED, "You have been logged in from another device.")))
+                )
                 .csrf(CsrfConfigurer::spa)
                 .logout(logout -> logout
                         .logoutRequestMatcher(PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/auth/logout"))
@@ -87,10 +100,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(
-            AppUserDetailsService userDetailsService,
-            PasswordEncoder passwordEncoder,
-            AuthenticationEventPublisher eventPublisher) {
+    public AuthenticationManager authenticationManager(AppUserDetailsService userDetailsService,
+                                                       PasswordEncoder passwordEncoder,
+                                                       AuthenticationEventPublisher eventPublisher) {
         var provider = new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
 
@@ -114,5 +126,13 @@ public class SecurityConfig {
                 Map.of("argon2@SpringSecurity_v5_8", argon2)
         );
     }
+
+    // Required for maximumSessions — publishes session lifecycle events to Spring Security's SessionRegistry
+    // docs: servlet/authentication/session-management.html#ns-concurrent-sessions
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
+    }
+
 
 }

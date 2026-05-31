@@ -32,7 +32,8 @@ public class LogFields {
         public final String CART_FULL = "CART_FULL";
         public final String VALIDATION_FAILURE = "VALIDATION_FAILURE";
         public final String CATALOG_LIST    = "CATALOG_LIST";
-        public final String ORDER_SUBMITTED = "ORDER_SUBMITTED";
-        public final String ORDER_CONFIRMED = "ORDER_CONFIRMED";
+        public final String ORDER_SUBMITTED   = "ORDER_SUBMITTED";
+        public final String ORDER_CONFIRMED   = "ORDER_CONFIRMED";
+        public final String LOGIN_THROTTLED   = "LOGIN_THROTTLED";
     }
 }

@@ -1,14 +1,18 @@
 package gr.unipi.eshop.order;
 
-import gr.unipi.eshop.cart.CartItem;
+import gr.unipi.eshop.catalog.Product;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 
-public record OrderLine(String name, int quantity, BigDecimal price, String currency, BigDecimal subtotal)
-        implements Serializable {
+public record OrderLine(String name, int quantity, BigDecimal price, String currency, BigDecimal subtotal) {
 
-    static OrderLine from(CartItem item) {
-        return new OrderLine(item.name(), item.quantity(), item.price(), item.currency(), item.subtotal());
+    static OrderLine from(Product product, int quantity) {
+        return new OrderLine(
+                product.getName(),
+                quantity,
+                product.getPrice(),
+                product.getCurrency(),
+                product.getPrice().multiply(BigDecimal.valueOf(quantity))
+        );
     }
 }
