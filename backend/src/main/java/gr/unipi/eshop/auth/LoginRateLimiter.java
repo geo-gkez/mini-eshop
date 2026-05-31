@@ -9,25 +9,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Duration;
-
 @Slf4j
 @NullMarked
 @Component
 @RequiredArgsConstructor
 public class LoginRateLimiter {
 
-    private static final int    USERNAME_THRESHOLD = 10;
-    private static final int    IP_THRESHOLD       = 20;
-    private static final Duration WINDOW           = Duration.ofMinutes(15);
-
+    private final LoginRateLimitProperties properties;
     private final StringRedisTemplate redisTemplate;
 
     public void checkLimit(String username, String clientIp) {
         var userFailures = getCount(userKey(username));
-        var ipFailures   = getCount(ipKey(clientIp));
+        var ipFailures = getCount(ipKey(clientIp));
 
-        if (userFailures >= USERNAME_THRESHOLD || ipFailures >= IP_THRESHOLD) {
+        if (userFailures >= properties.usernameThreshold() || ipFailures >= properties.ipThreshold()) {
             log.atWarn()
                     .addKeyValue(LogFields.Key.EVENT, LogFields.Event.LOGIN_THROTTLED)
                     .addKeyValue(LogFields.Key.USER, username)
@@ -35,9 +30,14 @@ public class LoginRateLimiter {
                             username, userFailures, ipFailures);
             throw new ResponseStatusException(
                     HttpStatus.TOO_MANY_REQUESTS,
-                    "Too many failed login attempts. Please try again in 15 minutes."
+                    "Too many failed login attempts. Please try again later."
             );
         }
+    }
+
+    private long getCount(String key) {
+        var value = redisTemplate.opsForValue().get(key);
+        return value != null ? Long.parseLong(value) : 0L;
     }
 
     public void onFailure(String username, String clientIp) {
@@ -50,16 +50,11 @@ public class LoginRateLimiter {
         redisTemplate.delete(userKey(username));
     }
 
-    private long getCount(String key) {
-        var value = redisTemplate.opsForValue().get(key);
-        return value != null ? Long.parseLong(value) : 0L;
-    }
-
     private void increment(String key) {
         var count = redisTemplate.opsForValue().increment(key);
         if (count != null && count == 1L) {
             // First failure in this window — set the expiry
-            redisTemplate.expire(key, WINDOW);
+            redisTemplate.expire(key, properties.window());
         }
     }
 

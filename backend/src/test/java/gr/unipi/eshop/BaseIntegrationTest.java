@@ -10,8 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -25,6 +27,9 @@ public abstract class BaseIntegrationTest {
     @Autowired
     protected JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    protected StringRedisTemplate redisTemplate;
+
     protected RequestSpecification requestSpec;
 
     @BeforeEach
@@ -32,6 +37,16 @@ public abstract class BaseIntegrationTest {
         // The cart and pending orders persist per-user in the DB now, so isolate tests by clearing
         // them between runs. Users and products are seeded and must remain.
         jdbcTemplate.execute("TRUNCATE cart_items, carts, order_lines, orders RESTART IDENTITY CASCADE");
+    }
+
+    @BeforeEach
+    void resetLoginRateLimitCounters() {
+        // The Redis container is reused across tests; clear the login-failure counters so a
+        // throttle test (or any failed-login test) cannot leak state into the next test.
+        Set<String> keys = redisTemplate.keys("login:fail:*");
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
     }
 
     @BeforeEach

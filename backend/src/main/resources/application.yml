@@ -3,6 +3,10 @@ app:
     admin-email: ${SHOP_ADMIN_EMAIL:shop@example.com}
   session:
     absolute-timeout: 8h
+  login-rate-limit:
+    username-threshold: 10
+    ip-threshold: 20
+    window: 15m
 
 spring:
   application:
