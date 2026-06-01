@@ -13,17 +13,18 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.security.web.authentication.session.*;
 import org.springframework.security.web.context.DelegatingSecurityContextRepository;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
@@ -36,12 +37,17 @@ import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.Session;
 import org.springframework.session.security.SpringSessionBackedSessionRegistry;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    // Concurrency limit enforced in two phases: the DSL installs ConcurrentSessionFilter (per-request
+    // expiry check) and the sessionAuthenticationStrategy bean enforces it at login. Both read this value.
+    private static final int MAX_CONCURRENT_SESSIONS = 1;
 
     @Bean
     public SecurityContextRepository securityContextRepository() {
@@ -68,7 +74,7 @@ public class SecurityConfig {
                         // Expired or missing sessions fall through to AuthenticationEntryPoint (401 JSON).
                         // docs: servlet/authentication/session-management.html#ns-concurrent-sessions
                         session.sessionConcurrency(concurrency -> concurrency
-                                .maximumSessions(1)
+                                .maximumSessions(MAX_CONCURRENT_SESSIONS)
                                 .sessionRegistry(sessionRegistry)
                                 .expiredSessionStrategy(event ->
                                         writer.write(event.getResponse(), HttpStatus.UNAUTHORIZED, "You have been logged in from another device.")))
@@ -142,5 +148,20 @@ public class SecurityConfig {
         return new SpringSessionBackedSessionRegistry<>(sessionRepository);
     }
 
+    // formLogin/httpBasic are disabled, so no built-in filter invokes the SessionAuthenticationStrategy.
+    // AuthController.login must call this explicitly, otherwise maximumSessions(1) above silently no-ops.
+    // Order is the canonical one: enforce the limit -> rotate the session id -> register the new session.
+    // docs: servlet/authentication/session-management.html — "authentication mechanisms themselves must invoke the SessionAuthenticationStrategy"
+    @Bean
+    public SessionAuthenticationStrategy sessionAuthenticationStrategy(SessionRegistry sessionRegistry) {
+        var concurrency = new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry);
+        concurrency.setMaximumSessions(MAX_CONCURRENT_SESSIONS);
+        // exceptionIfMaximumExceeded stays false -> expire the oldest session (pairs with expiredSessionStrategy 401)
+        return new CompositeSessionAuthenticationStrategy(List.of(
+                concurrency,
+                new ChangeSessionIdAuthenticationStrategy(), // session-fixation defence; replaces request.changeSessionId()
+                new RegisterSessionAuthenticationStrategy(sessionRegistry) // no-op for the Spring Session-backed registry, kept for completeness
+        ));
+    }
 
 }

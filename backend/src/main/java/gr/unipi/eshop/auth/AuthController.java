@@ -13,6 +13,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
+    private final SessionAuthenticationStrategy sessionAuthenticationStrategy;
     private final LoginRateLimiter loginRateLimiter;
     private final SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder.getContextHolderStrategy();
 
@@ -44,14 +46,15 @@ public class AuthController {
 
             loginRateLimiter.onSuccess(loginRequest.username());
 
+            // Enforce maximumSessions(1): consult the registry, expire the oldest session,
+            // rotate the session id (fixation defence), register the new one. formLogin/httpBasic
+            // are disabled, so this is the only place the strategy gets invoked. Must run before saveContext.
+            sessionAuthenticationStrategy.onAuthentication(auth, request, response);
+
             var context = securityContextHolderStrategy.createEmptyContext();
             context.setAuthentication(auth);
             securityContextHolderStrategy.setContext(context);
-
-            // Save first (creates/updates session), then rotate ID for session-fixation defence.
-            // changeSessionId() preserves session data while issuing a new session token.
             securityContextRepository.saveContext(context, request, response);
-            request.changeSessionId();
 
             return ResponseEntity.ok(new UserInfo(auth.getName()));
 
