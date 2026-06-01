@@ -64,10 +64,17 @@
       </v-row>
     </template>
 
-    <v-row justify="end" class="mt-6">
-      <v-btn color="secondary" prepend-icon="mdi-cart" @click="$emit('go-cart')">
-        View Cart<span v-if="cartCount > 0"> ({{ cartCount }})</span>
-      </v-btn>
+    <v-divider class="mt-8 mb-4" />
+    <v-row justify="space-between" align="center">
+      <v-col>
+        <span class="text-body-2 text-medium-emphasis">
+          <span v-if="cartCount === 0">Your cart is empty</span>
+          <span v-else>{{ cartCount }} item{{ cartCount !== 1 ? 's' : '' }} in your cart</span>
+        </span>
+      </v-col>
+      <v-col cols="auto">
+        <v-btn color="secondary" prepend-icon="mdi-cart" @click="$emit('go-cart')">View Cart</v-btn>
+      </v-col>
     </v-row>
   </div>
 </template>
