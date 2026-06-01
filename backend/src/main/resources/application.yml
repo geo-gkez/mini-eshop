@@ -72,18 +72,16 @@ management:
   tracing:
     sampling:
       probability: 1.0
-
-spring.otlp:
-  metrics:
-    export:
-      url: http://${OTEL_HOST:localhost}:4318/v1/metrics
-
-spring.opentelemetry:
-  tracing:
-    export:
-      otlp:
-        endpoint: http://${OTEL_HOST:localhost}:4318/v1/traces
-  logging:
-    export:
-      otlp:
-        endpoint: http://${OTEL_HOST:localhost}:4318/v1/logs
+  otlp:
+    metrics:
+      export:
+        url: http://${OTEL_HOST:localhost}:4318/v1/metrics
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://${OTEL_HOST:localhost}:4318/v1/traces
+    logging:
+      export:
+        otlp:
+          endpoint: http://${OTEL_HOST:localhost}:4318/v1/logs
