@@ -3,9 +3,11 @@
     <v-app-bar v-if="user" color="primary" density="compact">
       <v-toolbar-title>E-Shop</v-toolbar-title>
       <v-btn variant="text" @click="view = 'catalog'">Catalog</v-btn>
-      <v-badge :content="cartCount" :model-value="cartCount > 0" color="error" floating>
-        <v-btn variant="text" prepend-icon="mdi-cart" @click="view = 'cart'">Cart</v-btn>
-      </v-badge>
+      <v-btn variant="text" prepend-icon="mdi-cart" @click="view = 'cart'">
+        <v-badge :content="cartCount" :model-value="cartCount > 0" color="error" floating>
+          Cart
+        </v-badge>
+      </v-btn>
       <v-spacer />
       <v-btn variant="text" prepend-icon="mdi-account">{{ user }}</v-btn>
       <v-btn variant="text" icon="mdi-logout" @click="doLogout" />
@@ -74,6 +76,9 @@ async function doLogout() {
     user.value = null
     cartCount.value = 0
     view.value = 'catalog'
+    // The logout response carries Clear-Site-Data: "cookies", which wipes all cookies
+    // including XSRF-TOKEN. Re-seed it so the login form can POST immediately.
+    try { await api('/auth/me') } catch { /* 401 expected; cookie is still written */ }
   }
 }
 
