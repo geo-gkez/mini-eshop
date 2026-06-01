@@ -1,5 +1,20 @@
 services:
 
+  # Observability backend (Grafana + Loki + Tempo + Prometheus, all-in-one).
+  # The backend unconditionally exports OTLP telemetry here (OTEL_HOST: grafana-lgtm),
+  # so this is a runtime dependency of the stack, not a dev-only tool.
+  grafana-lgtm:
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "3000:3000"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      GF_SECURITY_ADMIN_USER:     ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    networks:
+      - internal
+
   postgres:
     image: postgres:18
     environment:
@@ -33,6 +48,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      grafana-lgtm:
+        condition: service_started
     environment:
       DB_HOST:          postgres
       DB_PORT:          5432
