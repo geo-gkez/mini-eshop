@@ -13,6 +13,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -31,7 +32,9 @@ import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter
 import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter.Directive;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.Session;
+import org.springframework.session.security.SpringSessionBackedSessionRegistry;
 
 import java.util.Map;
 
@@ -52,6 +55,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JsonAuthHandlers authHandlers,
                                            SecurityContextRepository securityContextRepository,
+                                           SessionRegistry sessionRegistry,
                                            ProblemDetailWriter writer) {
         // docs: servlet/authentication/persistence.html — SecurityContextRepository / explicit save
         // docs: servlet/authentication/session-management.html — session fixation / changeSessionId / maximumSessions
@@ -65,6 +69,7 @@ public class SecurityConfig {
                         // docs: servlet/authentication/session-management.html#ns-concurrent-sessions
                         session.sessionConcurrency(concurrency -> concurrency
                                 .maximumSessions(1)
+                                .sessionRegistry(sessionRegistry)
                                 .expiredSessionStrategy(event ->
                                         writer.write(event.getResponse(), HttpStatus.UNAUTHORIZED, "You have been logged in from another device.")))
                 )
@@ -127,11 +132,14 @@ public class SecurityConfig {
         );
     }
 
-    // Required for maximumSessions — publishes session lifecycle events to Spring Security's SessionRegistry
+    // Backs Spring Security's concurrency control (maximumSessions) with the Spring Session store.
+    // The in-memory default SessionRegistry never sees Redis-backed sessions, so without this the
+    // limit silently no-ops; it requires the indexed repository (spring.session.data.redis.repository-type=indexed).
     // docs: servlet/authentication/session-management.html#ns-concurrent-sessions
     @Bean
-    public HttpSessionEventPublisher httpSessionEventPublisher() {
-        return new HttpSessionEventPublisher();
+    public <S extends Session> SpringSessionBackedSessionRegistry<S> sessionRegistry(
+            FindByIndexNameSessionRepository<S> sessionRepository) {
+        return new SpringSessionBackedSessionRegistry<>(sessionRepository);
     }
 
 

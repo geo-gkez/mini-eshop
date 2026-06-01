@@ -23,6 +23,8 @@ spring:
       redis:
         flush-mode: on-save
         configure-action: notify-keyspace-events
+        # indexed repo enables lookup-by-principal, required for maximumSessions concurrency control
+        repository-type: indexed
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:eshop}
