@@ -23,6 +23,7 @@ public class LogFields {
         public final String LOGIN_SUCCESS = "LOGIN_SUCCESS";
         public final String LOGIN_FAILURE = "LOGIN_FAILURE";
         public final String LOGOUT = "LOGOUT";
+        public final String SESSION_EVICTED = "SESSION_EVICTED";
         public final String UNAUTHENTICATED_ACCESS = "UNAUTHENTICATED_ACCESS";
         public final String ACCESS_DENIED = "ACCESS_DENIED";
         public final String CART_ITEM_ADDED = "CART_ITEM_ADDED";

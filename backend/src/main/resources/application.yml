@@ -68,10 +68,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, loggers, metrics
+        # 'loggers' is write-capable (runtime log-level changes) and the management port has no
+        # auth — keep it off the exposed set. Log export goes through OTLP, not this endpoint.
+        include: health, metrics
   endpoint:
     health:
-      show-details: always
+      # No security on the management context, so 'always' would leak DB/Redis internals to anyone
+      # who can reach :8081. 'when_authorized' degrades to a bare {status} for unauthenticated callers.
+      show-details: when_authorized
   tracing:
     sampling:
       probability: 1.0

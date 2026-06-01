@@ -2,6 +2,7 @@ package gr.unipi.eshop.config;
 
 import gr.unipi.eshop.auth.AppUserDetailsService;
 import gr.unipi.eshop.shared.LogFields;
+import jakarta.servlet.DispatcherType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -45,8 +46,6 @@ import java.util.Map;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // Concurrency limit enforced in two phases: the DSL installs ConcurrentSessionFilter (per-request
-    // expiry check) and the sessionAuthenticationStrategy bean enforces it at login. Both read this value.
     private static final int MAX_CONCURRENT_SESSIONS = 1;
 
     @Bean
@@ -76,8 +75,16 @@ public class SecurityConfig {
                         session.sessionConcurrency(concurrency -> concurrency
                                 .maximumSessions(MAX_CONCURRENT_SESSIONS)
                                 .sessionRegistry(sessionRegistry)
-                                .expiredSessionStrategy(event ->
-                                        writer.write(event.getResponse(), HttpStatus.UNAUTHORIZED, "You have been logged in from another device.")))
+                                .expiredSessionStrategy(event -> {
+                                    // Fires on the evicted (older) session's next request — audit it so a
+                                    // concurrent login (incl. a possible credential-stuffing takeover) is traceable.
+                                    var principal = event.getSessionInformation().getPrincipal();
+                                    log.atInfo()
+                                            .addKeyValue(LogFields.Key.EVENT, LogFields.Event.SESSION_EVICTED)
+                                            .addKeyValue(LogFields.Key.USER, String.valueOf(principal))
+                                            .log("session evicted by concurrent login user={}", principal);
+                                    writer.write(event.getResponse(), HttpStatus.UNAUTHORIZED, "You have been logged in from another device.");
+                                }))
                 )
                 .csrf(CsrfConfigurer::spa)
                 .logout(logout -> logout
@@ -103,9 +110,13 @@ public class SecurityConfig {
                         .accessDeniedHandler(authHandlers)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // Spring Security also filters the container's internal ERROR dispatch; permit it
+                        // by dispatch type (not path — the error dispatch may keep the original URI) so
+                        // ProblemDetail responses still render under the default-deny catch-all below.
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll()
+                        .anyRequest().denyAll()
                 )
                 .build();
     }
@@ -138,9 +149,6 @@ public class SecurityConfig {
         );
     }
 
-    // Backs Spring Security's concurrency control (maximumSessions) with the Spring Session store.
-    // The in-memory default SessionRegistry never sees Redis-backed sessions, so without this the
-    // limit silently no-ops; it requires the indexed repository (spring.session.data.redis.repository-type=indexed).
     // docs: servlet/authentication/session-management.html#ns-concurrent-sessions
     @Bean
     public <S extends Session> SpringSessionBackedSessionRegistry<S> sessionRegistry(
