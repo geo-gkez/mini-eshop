@@ -46,7 +46,10 @@ public class LoginRateLimiter {
     }
 
     public void onSuccess(String username) {
-        // Reset per-username counter — a successful login clears the slate
+        // Reset only the per-username counter — a legitimate login clears that account's slate.
+        // The per-IP counter is intentionally NOT cleared: it tracks credential-stuffing from a
+        // source, and an attacker could otherwise reset it by logging into one account they own.
+        // The IP counter decays by TTL (the window) only.
         redisTemplate.delete(userKey(username));
     }
 
