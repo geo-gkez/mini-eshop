@@ -15,7 +15,7 @@
 
     <v-main>
       <v-container class="py-6">
-        <LoginView v-if="!user" @logged-in="onLogin" />
+        <LoginView v-if="!user" :notice="authNotice" @logged-in="onLogin" />
         <CatalogView
           v-else-if="view === 'catalog'"
           :cart-count="cartCount"
@@ -30,7 +30,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { api } from './api/client.js'
 import LoginView from './views/LoginView.vue'
 import CatalogView from './views/CatalogView.vue'
@@ -40,8 +40,10 @@ import OrderView from './views/OrderView.vue'
 const user = ref(null)
 const view = ref('catalog')
 const cartCount = ref(0)
+const authNotice = ref(null)
 
 onMounted(async () => {
+  window.addEventListener('auth:expired', onAuthExpired)
   try {
     const data = await api('/auth/me')
     user.value = data.username
@@ -51,11 +53,26 @@ onMounted(async () => {
   }
 })
 
+onUnmounted(() => {
+  window.removeEventListener('auth:expired', onAuthExpired)
+})
+
+async function onAuthExpired(e) {
+  if (!user.value) return // already on login; ignore
+  user.value = null
+  cartCount.value = 0
+  view.value = 'catalog'
+  authNotice.value = e.detail
+  // The session is gone and Spring rotated the CSRF token; re-seed XSRF-TOKEN so login can POST.
+  try { await api('/auth/me') } catch { /* 401 expected; cookie is still written */ }
+}
+
 async function onLogin() {
   // Must re-call /me after login: Spring rotates the CSRF token on authentication
   // (CsrfAuthenticationStrategy clears the old token; /me forces the deferred cookie write)
   const data = await api('/auth/me')
   user.value = data.username
+  authNotice.value = null
   await loadCartCount()
   view.value = 'catalog'
 }

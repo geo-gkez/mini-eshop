@@ -4,6 +4,7 @@
       <v-card>
         <v-card-title class="pt-4 px-4">Sign In</v-card-title>
         <v-card-text>
+          <v-alert v-if="notice" type="info" density="compact" class="mb-4">{{ notice }}</v-alert>
           <v-alert v-if="error" type="error" density="compact" class="mb-4">{{ error }}</v-alert>
           <v-text-field
             v-model="username"
@@ -33,6 +34,10 @@
 <script setup>
 import { ref } from 'vue'
 import { api } from '../api/client.js'
+
+defineProps({
+  notice: { type: String, default: null },
+})
 
 const emit = defineEmits(['logged-in'])
 

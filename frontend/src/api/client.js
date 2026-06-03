@@ -34,6 +34,12 @@ export async function api(path, { method = 'GET', body } = {}) {
   const data = res.status === 204 ? null : await res.json().catch(() => null)
 
   if (!res.ok) {
+
+    if (res.status === 401 && !path.startsWith('/auth/')) {
+      const detail = data?.detail ?? 'Your session has expired. Please log in again.'
+      window.dispatchEvent(new CustomEvent('auth:expired', { detail }))
+    }
+
     const err = new Error(`${method} /api${path} → ${res.status}`)
     err.name = 'ApiError'
     err.status = res.status
