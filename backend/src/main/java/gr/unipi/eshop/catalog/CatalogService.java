@@ -42,7 +42,7 @@ public class CatalogService {
                 .addKeyValue(LogFields.Key.SEARCH, searched ? search : "")
                 .addKeyValue(LogFields.Key.PAGE, page)
                 .addKeyValue(LogFields.Key.SIZE, size)
-                .log("catalog list search={} page={} size{}", searched ? search : "", page, size);
+                .log("catalog list search={} page={} size={}", searched ? search : "", page, size);
 
         return new CatalogResponse(searched, term, products, pagination);
     }

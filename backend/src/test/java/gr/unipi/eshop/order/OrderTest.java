@@ -43,7 +43,7 @@ class OrderTest extends BaseIntegrationTest {
                 .when()
                 .post("/api/cart/items")
                 .then()
-                .statusCode(201);
+                .statusCode(200);
     }
 
     private Map<String, String> validAddress() {

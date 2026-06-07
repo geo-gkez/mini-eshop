@@ -3,6 +3,7 @@ package gr.unipi.eshop.config;
 import gr.unipi.eshop.shared.LogFields;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -10,8 +11,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+import static org.springframework.http.HttpStatus.*;
 
 @Slf4j
 @RestControllerAdvice
@@ -35,6 +35,19 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle(BAD_REQUEST.getReasonPhrase());
 
         return ResponseEntity.status(BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problemDetail);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ProblemDetail> handleDataIntegrityViolation() {
+        log.atWarn().addKeyValue(LogFields.Key.EVENT, LogFields.Event.VALIDATION_FAILURE).log("data integrity violation");
+
+        var problemDetail = ProblemDetail.forStatus(CONFLICT);
+        problemDetail.setTitle(CONFLICT.getReasonPhrase());
+        problemDetail.setDetail("The request conflicts with the current state. Please retry.");
+
+        return ResponseEntity.status(CONFLICT)
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problemDetail);
     }

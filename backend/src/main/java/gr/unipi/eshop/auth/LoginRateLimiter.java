@@ -56,7 +56,10 @@ public class LoginRateLimiter {
     private void increment(String key) {
         var count = redisTemplate.opsForValue().increment(key);
         if (count != null && count == 1L) {
-            // First failure in this window — set the expiry
+            // First failure in this window — set the expiry.
+            // Edge case (accepted): a process/connection failure between INCR and EXPIRE would leave a
+            // TTL-less counter. Negligible for this single-instance scope; cleared with DEL if it ever
+            // occurs. See SECURITY_CONTROLS.md §11.
             redisTemplate.expire(key, properties.window());
         }
     }

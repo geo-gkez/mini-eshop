@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Entity
@@ -16,8 +17,6 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public class CartEntity {
-
-    private static final int MAX_ITEMS = 50;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,19 +37,31 @@ public class CartEntity {
     void add(Product product, int quantity) {
         var existing = findByProduct(product.getReference());
         if (existing.isPresent()) {
-            existing.get().addQuantity(quantity);
+            var item = existing.get();
+            requireWithinQuantityLimit(item.getQuantity() + quantity);
+            item.addQuantity(quantity);
             return;
         }
-        if (items.size() >= MAX_ITEMS) {
+        if (items.size() >= CartPolicy.MAX_ITEMS) {
             throw new CartFullException();
         }
+        requireWithinQuantityLimit(quantity);
         items.add(new CartItemEntity(this, product, quantity));
     }
 
     boolean update(UUID productReference, int quantity) {
         var item = findByProduct(productReference);
-        item.ifPresent(i -> i.setQuantity(quantity));
+        item.ifPresent(i -> {
+            requireWithinQuantityLimit(quantity);
+            i.setQuantity(quantity);
+        });
         return item.isPresent();
+    }
+
+    private static void requireWithinQuantityLimit(int quantity) {
+        if (quantity > CartPolicy.MAX_QUANTITY_PER_ITEM) {
+            throw new CartItemQuantityException();
+        }
     }
 
     boolean remove(UUID productReference) {
@@ -67,7 +78,7 @@ public class CartEntity {
         return new CartResponse(lines, total);
     }
 
-    private java.util.Optional<CartItemEntity> findByProduct(UUID productReference) {
+    private Optional<CartItemEntity> findByProduct(UUID productReference) {
         return items.stream()
                 .filter(i -> i.getProduct().getReference().equals(productReference))
                 .findFirst();

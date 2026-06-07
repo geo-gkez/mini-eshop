@@ -1,6 +1,7 @@
 app:
   order:
     admin-email: ${SHOP_ADMIN_EMAIL:shop@example.com}
+    from-email: ${SHOP_FROM_EMAIL:no-reply@example.com}
   session:
     absolute-timeout: 8h
   login-rate-limit:
@@ -53,7 +54,10 @@ server:
   forward-headers-strategy: native
   tomcat:
     remoteip:
-      internal-proxies: '172\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+      # RFC1918 172.16.0.0/12 only (the Docker bridge range). The previous '172\.\d{1,3}...'
+      # trusted all of 172.0.0.0/8 — including public 172.x hosts — which would let such a source
+      # spoof X-Forwarded-For and bypass the per-IP login throttle.
+      internal-proxies: '172\.(1[6-9]|2[0-9]|3[01])\.\d{1,3}\.\d{1,3}'
   servlet:
     session:
       cookie:

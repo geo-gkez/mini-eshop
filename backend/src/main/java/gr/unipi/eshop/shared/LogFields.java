@@ -35,6 +35,7 @@ public class LogFields {
         public final String CATALOG_LIST    = "CATALOG_LIST";
         public final String ORDER_SUBMITTED   = "ORDER_SUBMITTED";
         public final String ORDER_CONFIRMED   = "ORDER_CONFIRMED";
+        public final String ORDER_EMAIL_FAILED = "ORDER_EMAIL_FAILED";
         public final String LOGIN_THROTTLED   = "LOGIN_THROTTLED";
     }
 }

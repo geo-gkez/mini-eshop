@@ -4,7 +4,6 @@ import gr.unipi.eshop.auth.CurrentUser;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,8 +30,7 @@ public class CartController {
     public ResponseEntity<CartResponse> addItem(@RequestBody @Valid AddItemRequest addItemRequest,
                                                 @CurrentUser UserDetails user) {
         return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(cartService.addItem(user.getUsername(), addItemRequest.productReference(), addItemRequest.quantity()));
+                .ok(cartService.addItem(user.getUsername(), addItemRequest.productReference(), addItemRequest.quantity()));
     }
 
     @PatchMapping(value = "/items/{reference}", consumes = MediaType.APPLICATION_JSON_VALUE)

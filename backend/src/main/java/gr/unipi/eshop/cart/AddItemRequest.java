@@ -7,5 +7,5 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record AddItemRequest(@NotNull UUID productReference,
-                             @Min(1) @Max(999) int quantity) {
+                             @Min(1) @Max(CartPolicy.MAX_QUANTITY_PER_ITEM) int quantity) {
 }

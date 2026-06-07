@@ -62,7 +62,7 @@ class CartTest extends BaseIntegrationTest {
                 .when()
                 .post("/api/cart/items")
                 .then()
-                .statusCode(201)
+                .statusCode(200)
                 .body("items", hasSize(1))
                 .body("items[0].quantity", equalTo(2));
     }
@@ -104,7 +104,7 @@ class CartTest extends BaseIntegrationTest {
                 .when()
                 .post("/api/cart/items")
                 .then().
-                statusCode(201);
+                statusCode(200);
 
         given().spec(requestSpec)
                 .cookie(AuthTestSupport.SESSION_COOKIE, session)
@@ -112,7 +112,7 @@ class CartTest extends BaseIntegrationTest {
                 .when()
                 .post("/api/cart/items")
                 .then()
-                .statusCode(201)
+                .statusCode(200)
                 .body("items", hasSize(1))
                 .body("items[0].quantity", equalTo(3));
     }
@@ -128,7 +128,7 @@ class CartTest extends BaseIntegrationTest {
                 .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of("productReference", ref.toString(), "quantity", 1))
                 .when()
-                .post("/api/cart/items").then().statusCode(201);
+                .post("/api/cart/items").then().statusCode(200);
 
         given().spec(requestSpec)
                 .cookie(AuthTestSupport.SESSION_COOKIE, session)
@@ -164,7 +164,7 @@ class CartTest extends BaseIntegrationTest {
                 .cookie(AuthTestSupport.SESSION_COOKIE, session)
                 .body(Map.of("productReference", ref.toString(), "quantity", 1))
                 .when()
-                .post("/api/cart/items").then().statusCode(201);
+                .post("/api/cart/items").then().statusCode(200);
 
         given().spec(requestSpec)
                 .cookie(AuthTestSupport.SESSION_COOKIE, session)
@@ -205,7 +205,7 @@ class CartTest extends BaseIntegrationTest {
                 .cookie(AuthTestSupport.SESSION_COOKIE, aliceSession)
                 .body(Map.of("productReference", ref.toString(), "quantity", 1))
                 .when()
-                .post("/api/cart/items").then().statusCode(201);
+                .post("/api/cart/items").then().statusCode(200);
 
         given().spec(requestSpec)
                 .cookie(AuthTestSupport.SESSION_COOKIE, bobSession)
@@ -227,7 +227,7 @@ class CartTest extends BaseIntegrationTest {
                 .cookie(AuthTestSupport.SESSION_COOKIE, firstSession)
                 .body(Map.of("productReference", ref.toString(), "quantity", 3))
                 .when()
-                .post("/api/cart/items").then().statusCode(201);
+                .post("/api/cart/items").then().statusCode(200);
 
         // Log out, then log in again — a brand-new session.
         given().spec(requestSpec)

@@ -1,6 +1,7 @@
 package gr.unipi.eshop.cart;
 
 import gr.unipi.eshop.catalog.Product;
+import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -10,7 +11,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-// Unit test for the MAX_ITEMS=50 rule, which now lives on CartEntity (same package → package-private access).
+// Unit tests for the cart limits in CartPolicy (MAX_ITEMS, MAX_QUANTITY_PER_ITEM), enforced by
+// CartEntity. Same package → package-private access.
 class CartLimitTest {
 
     private static Product product(UUID reference) {
@@ -43,5 +45,37 @@ class CartLimitTest {
         cart.add(product(existing), 1);
 
         assertThatNoException().isThrownBy(() -> cart.add(product(existing), 2));
+    }
+
+    @Test
+    void add_whenSingleQuantityExceedsMax_throwsQuantityException() {
+        var cart = new CartEntity(null);
+
+        ThrowableAssert.ThrowingCallable throwingCallable = () -> cart.add(product(UUID.randomUUID()), CartPolicy.MAX_QUANTITY_PER_ITEM + 1);
+
+        assertThatThrownBy(throwingCallable)
+                .isInstanceOf(CartItemQuantityException.class);
+    }
+
+    @Test
+    void add_whenRepeatedAddsExceedMax_throwsQuantityException() {
+        var ref = UUID.randomUUID();
+        var cart = new CartEntity(null);
+        cart.add(product(ref), CartPolicy.MAX_QUANTITY_PER_ITEM); // exactly at the cap
+
+        // The per-request @Max(999) wouldn't catch this — the merge would push the line over the cap.
+        ThrowableAssert.ThrowingCallable throwingCallable = () -> cart.add(product(ref), 1);
+
+        assertThatThrownBy(throwingCallable)
+                .isInstanceOf(CartItemQuantityException.class);
+    }
+
+    @Test
+    void add_whenMergedQuantityAtMax_succeeds() {
+        var ref = UUID.randomUUID();
+        var cart = new CartEntity(null);
+        cart.add(product(ref), CartPolicy.MAX_QUANTITY_PER_ITEM - 1);
+
+        assertThatNoException().isThrownBy(() -> cart.add(product(ref), 1)); // lands exactly on the cap
     }
 }
