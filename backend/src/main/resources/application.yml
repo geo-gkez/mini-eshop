@@ -48,6 +48,14 @@ spring:
     properties:
       mail.smtp.auth: ${MAIL_SMTP_AUTH:false}
       mail.smtp.starttls.enable: ${MAIL_STARTTLS:false}
+      # HELO/EHLO name announced to the SMTP server. Defaults to the local hostname, which on Docker is
+      # the container id (leaks into the Received header). A neutral logical name avoids that.
+      mail.smtp.localhost: ${MAIL_LOCALHOST:mini-eshop}
+      # JavaMail default timeouts are infinite; an unresponsive SMTP server would block the request
+      # thread (the order-confirmed listener runs synchronously). Bound all three. (Spring Boot ref: IO/Email)
+      mail.smtp.connectiontimeout: ${MAIL_CONNECT_TIMEOUT:5000}
+      mail.smtp.timeout: ${MAIL_READ_TIMEOUT:3000}
+      mail.smtp.writetimeout: ${MAIL_WRITE_TIMEOUT:5000}
 
 server:
   port: 8080
