@@ -145,13 +145,14 @@ async function addToCart(product) {
   adding.value = product.reference
   addError.value = null
   try {
-    await api('/cart/items', {
+    // POST returns the updated cart, so hand it straight to the badge — no extra GET.
+    const cart = await api('/cart/items', {
       method: 'POST',
       body: { productReference: product.reference, quantity: 1 },
     })
     snackbarMsg.value = `"${product.name}" added to cart.`
     snackbar.value = true
-    emit('cart-changed')
+    emit('cart-changed', cart)
   } catch (e) {
     addError.value = e.body?.detail ?? 'Could not add to cart.'
   } finally {

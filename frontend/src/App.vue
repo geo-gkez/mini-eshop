@@ -91,9 +91,11 @@ async function onLogin() {
   view.value = 'catalog'
 }
 
-async function loadCartCount() {
+// Pass a cart payload (from an add/update/remove response) to update the badge
+// without a round-trip; call with no argument to fetch the cart fresh.
+async function loadCartCount(cart) {
   try {
-    const data = await api('/cart')
+    const data = cart ?? await api('/cart')
     cartCount.value = data.items.reduce((sum, item) => sum + item.quantity, 0)
   } catch {
     cartCount.value = 0

@@ -123,7 +123,7 @@ async function updateQty(item, qty) {
       body: { quantity: qty },
     })
     items.value = data.items
-    emit('cart-changed') // keep the app-bar badge in sync
+    emit('cart-changed', data) // reuse the PATCH response for the badge — no extra GET
   } catch (e) {
     error.value = e.body?.detail ?? 'Could not update quantity.'
   } finally {
@@ -136,10 +136,10 @@ async function removeItem(item) {
   busy.value = true
   try {
     await api(`/cart/items/${item.productReference}`, { method: 'DELETE' })
-    // DELETE returns 204 — reload the cart
+    // DELETE returns 204, so reload the cart once and reuse it for the badge too.
     const data = await api('/cart')
     items.value = data.items
-    emit('cart-changed') // keep the app-bar badge in sync
+    emit('cart-changed', data)
   } catch (e) {
     error.value = e.body?.detail ?? 'Could not remove item.'
   } finally {
