@@ -59,7 +59,7 @@ public class LoginRateLimiter {
             // First failure in this window — set the expiry.
             // Edge case (accepted): a process/connection failure between INCR and EXPIRE would leave a
             // TTL-less counter. Negligible for this single-instance scope; cleared with DEL if it ever
-            // occurs. See SECURITY_CONTROLS.md §11.
+            // occurs.
             redisTemplate.expire(key, properties.window());
         }
     }
