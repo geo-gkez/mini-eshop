@@ -70,18 +70,21 @@
       </v-row>
     </template>
 
-    <v-divider class="mt-8 mb-4" />
-    <v-row justify="space-between" align="center">
-      <v-col>
-        <span class="text-body-2 text-medium-emphasis">
-          <span v-if="cartCount === 0">Your cart is empty</span>
-          <span v-else>{{ cartCount }} item{{ cartCount !== 1 ? 's' : '' }} in your cart</span>
-        </span>
-      </v-col>
-      <v-col cols="auto">
-        <v-btn color="secondary" prepend-icon="mdi-cart" @click="$emit('go-cart')">View Cart</v-btn>
-      </v-col>
-    </v-row>
+    <!-- Cart-summary footer (requirement A8: page footnote with cart item count). -->
+    <v-footer class="mt-8 px-0 bg-transparent flex-column">
+      <v-divider class="mb-4" />
+      <v-row justify="space-between" align="center" class="w-100 ma-0">
+        <v-col>
+          <span class="text-body-2 text-medium-emphasis">
+            <span v-if="cartCount === 0">Your cart is empty</span>
+            <span v-else>{{ cartCount }} item{{ cartCount !== 1 ? 's' : '' }} in your cart</span>
+          </span>
+        </v-col>
+        <v-col cols="auto">
+          <v-btn color="secondary" prepend-icon="mdi-cart" @click="$emit('go-cart')">View Cart</v-btn>
+        </v-col>
+      </v-row>
+    </v-footer>
   </div>
 </template>
 
