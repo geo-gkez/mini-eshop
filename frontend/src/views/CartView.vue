@@ -35,7 +35,8 @@
                   icon="mdi-minus"
                   size="x-small"
                   variant="outlined"
-                  :disabled="item.quantity <= 1"
+                  :aria-label="`Decrease quantity of ${item.name}`"
+                  :disabled="busy || item.quantity <= 1"
                   @click="updateQty(item, item.quantity - 1)"
                 />
                 <span class="mx-1">{{ item.quantity }}</span>
@@ -43,6 +44,8 @@
                   icon="mdi-plus"
                   size="x-small"
                   variant="outlined"
+                  :aria-label="`Increase quantity of ${item.name}`"
+                  :disabled="busy"
                   @click="updateQty(item, item.quantity + 1)"
                 />
               </div>
@@ -50,6 +53,7 @@
             <td class="text-right">{{ formatPrice(item.subtotal, item.currency) }}</td>
             <td class="text-center">
               <v-btn icon="mdi-delete-outline" size="small" variant="text" color="error"
+                :aria-label="`Remove ${item.name} from cart`" :disabled="busy"
                 @click="removeItem(item)" />
             </td>
           </tr>
@@ -84,10 +88,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { api } from '../api/client.js'
 
-defineEmits(['go-catalog', 'go-order'])
+const emit = defineEmits(['go-catalog', 'go-order', 'cart-changed'])
 
 const items = ref([])
 const loading = ref(false)
+// Guards against overlapping qty/remove requests resolving out of order.
+const busy = ref(false)
 const error = ref(null)
 
 const total = computed(() =>
@@ -109,25 +115,35 @@ async function load() {
 }
 
 async function updateQty(item, qty) {
+  if (busy.value) return
+  busy.value = true
   try {
     const data = await api(`/cart/items/${item.productReference}`, {
       method: 'PATCH',
       body: { quantity: qty },
     })
     items.value = data.items
+    emit('cart-changed') // keep the app-bar badge in sync
   } catch (e) {
     error.value = e.body?.detail ?? 'Could not update quantity.'
+  } finally {
+    busy.value = false
   }
 }
 
 async function removeItem(item) {
+  if (busy.value) return
+  busy.value = true
   try {
     await api(`/cart/items/${item.productReference}`, { method: 'DELETE' })
     // DELETE returns 204 — reload the cart
     const data = await api('/cart')
     items.value = data.items
+    emit('cart-changed') // keep the app-bar badge in sync
   } catch (e) {
     error.value = e.body?.detail ?? 'Could not remove item.'
+  } finally {
+    busy.value = false
   }
 }
 

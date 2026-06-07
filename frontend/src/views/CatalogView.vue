@@ -7,12 +7,13 @@
           label="Search products"
           clearable
           hide-details
+          :disabled="loading"
           @keyup.enter="fetchProducts(1)"
           @click:clear="onClear"
         />
       </v-col>
       <v-col cols="12" sm="3">
-        <v-btn color="primary" block @click="fetchProducts(1)">Search</v-btn>
+        <v-btn color="primary" block :loading="loading" @click="fetchProducts(1)">Search</v-btn>
       </v-col>
     </v-row>
 
@@ -24,7 +25,7 @@
     <v-alert v-if="addError" type="error" density="compact" closable class="mb-4"
       @click:close="addError = null">{{ addError }}</v-alert>
 
-    <v-snackbar v-model="snackbar" :timeout="2000" color="success" location="bottom end">
+    <v-snackbar v-model="snackbar" :timeout="SNACKBAR_TIMEOUT" color="success" location="bottom end">
       {{ snackbarMsg }}
     </v-snackbar>
 
@@ -60,7 +61,12 @@
       </v-row>
 
       <v-row v-if="totalPages > 1" justify="center" class="mt-6">
-        <v-pagination v-model="page" :length="totalPages" @update:model-value="fetchProducts" />
+        <v-pagination
+          v-model="page"
+          :length="totalPages"
+          :disabled="loading"
+          @update:model-value="fetchProducts"
+        />
       </v-row>
     </template>
 
@@ -82,6 +88,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { api } from '../api/client.js'
+
+// Explicit name so <keep-alive include="CatalogView"> matches this component
+// regardless of how the build infers SFC names.
+defineOptions({ name: 'CatalogView' })
+
+const PAGE_SIZE = 9
+const SNACKBAR_TIMEOUT = 2000
 
 const props = defineProps({
   cartCount: { type: Number, default: 0 },
@@ -108,8 +121,9 @@ async function fetchProducts(p = page.value) {
   addError.value = null
   page.value = p
   try {
-    const params = new URLSearchParams({ page: p - 1, size: 9 })
-    if (search.value) params.set('search', search.value)
+    const params = new URLSearchParams({ page: p - 1, size: PAGE_SIZE })
+    const term = search.value?.trim()
+    if (term) params.set('search', term)
     const data = await api(`/products?${params}`)
     products.value = data.products
     totalPages.value = data.pagination.totalPages

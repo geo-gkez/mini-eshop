@@ -10,20 +10,29 @@
       </v-btn>
       <v-spacer />
       <v-btn variant="text" prepend-icon="mdi-account">{{ user }}</v-btn>
-      <v-btn variant="text" icon="mdi-logout" @click="doLogout" />
+      <v-btn variant="text" icon="mdi-logout" aria-label="Log out" @click="doLogout" />
     </v-app-bar>
 
     <v-main>
       <v-container class="py-6">
         <LoginView v-if="!user" :notice="authNotice" @logged-in="onLogin" />
-        <CatalogView
-          v-else-if="view === 'catalog'"
-          :cart-count="cartCount"
-          @go-cart="view = 'cart'"
-          @cart-changed="loadCartCount"
-        />
-        <CartView v-else-if="view === 'cart'" @go-catalog="view = 'catalog'" @go-order="view = 'order'" />
-        <OrderView v-else-if="view === 'order'" @confirmed="onConfirmed" @back="view = 'cart'" />
+        <!-- Keep CatalogView alive so search term and page survive a trip to the
+             cart and back; Cart/Order are intentionally remounted fresh. -->
+        <keep-alive v-else include="CatalogView">
+          <CatalogView
+            v-if="view === 'catalog'"
+            :cart-count="cartCount"
+            @go-cart="view = 'cart'"
+            @cart-changed="loadCartCount"
+          />
+          <CartView
+            v-else-if="view === 'cart'"
+            @go-catalog="view = 'catalog'"
+            @go-order="view = 'order'"
+            @cart-changed="loadCartCount"
+          />
+          <OrderView v-else-if="view === 'order'" @confirmed="onConfirmed" @back="view = 'cart'" />
+        </keep-alive>
       </v-container>
     </v-main>
   </v-app>
@@ -57,14 +66,19 @@ onUnmounted(() => {
   window.removeEventListener('auth:expired', onAuthExpired)
 })
 
+// Force Spring to write a fresh XSRF-TOKEN cookie. Needed whenever the session
+// (and its CSRF token) is gone — after expiry or logout — so the login form can POST.
+async function reseedCsrf() {
+  try { await api('/auth/me') } catch { /* 401 expected; cookie is still written */ }
+}
+
 async function onAuthExpired(e) {
   if (!user.value) return // already on login; ignore
   user.value = null
   cartCount.value = 0
   view.value = 'catalog'
   authNotice.value = e.detail
-  // The session is gone and Spring rotated the CSRF token; re-seed XSRF-TOKEN so login can POST.
-  try { await api('/auth/me') } catch { /* 401 expected; cookie is still written */ }
+  await reseedCsrf()
 }
 
 async function onLogin() {
@@ -95,7 +109,7 @@ async function doLogout() {
     view.value = 'catalog'
     // The logout response carries Clear-Site-Data: "cookies", which wipes all cookies
     // including XSRF-TOKEN. Re-seed it so the login form can POST immediately.
-    try { await api('/auth/me') } catch { /* 401 expected; cookie is still written */ }
+    await reseedCsrf()
   }
 }
 
