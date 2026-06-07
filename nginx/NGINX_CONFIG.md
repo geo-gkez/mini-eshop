@@ -88,6 +88,23 @@ including our own).
 Modern browsers use `frame-ancestors 'none'` in CSP for the same effect — we include both
 for compatibility with older browsers that don't parse CSP.
 
+> **Note on `X-XSS-Protection`:** intentionally **not** set. It controls a legacy, non-standard
+> XSS auditor that modern browsers have removed, and that could itself introduce XSS in some cases
+> (per MDN it is deprecated; CSP is the recommended replacement). Our CSP already disables inline
+> scripts (`script-src 'self'`), so the header would add nothing. Spring also emits `X-XSS-Protection: 0`
+> on `/api` responses by default.
+
+### Server header (server_tokens)
+
+```nginx
+server_tokens off;   # in the http {} block
+```
+
+Strips the nginx **version** from the `Server` response header (`Server: nginx` instead of
+`Server: nginx/1.27.x`) and from generated error pages. Reduces version fingerprinting that would
+let an attacker target known-CVE versions — a small Security-Misconfiguration / information-disclosure
+hardening. It does not hide that nginx is in use, only the version.
+
 ### Referrer-Policy
 
 ```nginx
