@@ -69,6 +69,24 @@ Run `make` (or `make help`) to list them:
 | `make down`  | Stop the stack (data preserved). |
 | `make clean` | Stop and **delete** the Postgres + Redis volumes. |
 
+### Without `make`
+
+`make` is only a wrapper over `docker compose`. If it isn't installed, run the commands directly —
+each one prepends `docker compose --project-directory . -f deployments/docker-compose.yml` so that
+build contexts and `.env` resolve from the repo root:
+
+| Instead of | Run from the repo root |
+|------------|------------------------|
+| `make certs` | `./nginx/gen-cert.sh` |
+| `make up` | `docker compose --project-directory . -f deployments/docker-compose.yml up -d --build` |
+| `make seed` | `docker compose --project-directory . -f deployments/docker-compose.yml exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < scripts/seed-users.sql` |
+| `make dev` | same as `up`, with `-f deployments/docker-compose.dev.yml` added before `up` |
+| `make prod` | same as `up`, with `-f deployments/docker-compose.prod.yml` added before `up` |
+| `make down` | `docker compose --project-directory . -f deployments/docker-compose.yml down` |
+| `make clean` | `docker compose --project-directory . -f deployments/docker-compose.yml down -v` |
+
+(Docker Engine + Compose v2 and `openssl` are still required; `make` is not.)
+
 ---
 
 ## URLs & ports
@@ -84,6 +102,20 @@ With the default stack, the order-confirmation email lands in **Mailpit** (`:802
 verify the checkout flow without sending real mail.
 
 ---
+
+## Run modes
+
+The Spring profile (and therefore where order emails go) depends on which target you start with —
+only `make prod` enables the `prod` profile:
+
+| Command | Spring profile | Order email goes to | TLS enforced |
+|---------|----------------|---------------------|:------------:|
+| `make up` | default | Mailpit (`:8025`) | no |
+| `make dev` | default | Mailpit (`:8025`) | no |
+| `make prod` | `prod` | real SMTP from `.env` | yes |
+
+`make dev` only adds the RedisInsight/pgAdmin UIs — it does **not** change the profile or the mail
+target.
 
 ## Real email (`make prod`)
 
