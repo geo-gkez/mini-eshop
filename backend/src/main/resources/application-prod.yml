@@ -1,0 +1,13 @@
+# Activated by SPRING_PROFILES_ACTIVE=prod (see deployments/docker-compose.prod.yml).
+# Hardens the outbound mail hop for a real SMTP provider: authenticated and TLS *required*
+# — the app refuses to send the order notification if the server will not negotiate STARTTLS.
+# This closes the "plaintext order email / no enforced MTA TLS" residual risk for prod runs.
+#
+# Host / port / username / password still come from the environment (see application.yml),
+# so this profile carries no secrets.
+spring:
+  mail:
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true

@@ -1,0 +1,19 @@
+# Real-email overlay for the prod profile.
+#   make prod
+# == docker compose --project-directory . -f deployments/docker-compose.yml \
+#       -f deployments/docker-compose.prod.yml up -d --build
+#
+# Activates the Spring 'prod' profile (enforces SMTP auth + STARTTLS, see
+# backend/src/main/resources/application-prod.yml). Mail host/port/user/password are read
+# from .env — set them to your real provider. Gmail example (fill in .env):
+#   MAIL_HOST=smtp.gmail.com
+#   MAIL_PORT=587
+#   MAIL_USER=youraddress@gmail.com
+#   MAIL_PASSWORD=<16-char Google App Password>   # NOT your account password; requires 2-Step Verification
+#   SHOP_ADMIN_EMAIL=<where order notifications are delivered>
+#
+# Mailpit still starts but is unused in this mode (the backend now talks to the real SMTP host).
+services:
+  backend:
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
