@@ -15,7 +15,8 @@ containers via Docker Compose, driven by a `Makefile`.
 ## Prerequisites
 
 - **Docker Engine + Docker Compose v2** (`docker compose`, not the old `docker-compose`).
-- **make** and **openssl** (for the self-signed cert).
+- **openssl** (for the self-signed cert).
+- **make** — optional; it just wraps `docker compose` (raw equivalents in [Without `make`](#without-make)).
 - Free ports on the host: **443** and **80** (app), **8025** (Mailpit), and for `make dev` also
   **5540** / **5050**.
 
