@@ -48,6 +48,10 @@ spring:
     properties:
       mail.smtp.auth: ${MAIL_SMTP_AUTH:false}
       mail.smtp.starttls.enable: ${MAIL_STARTTLS:false}
+      # 'enable' only OFFERS STARTTLS; 'required' makes the app refuse to send if the server will not
+      # negotiate TLS. Off for the local Mailpit sink (no TLS); set true in a real deployment so the
+      # admin-notification hop is TLS-enforced rather than best-effort.
+      mail.smtp.starttls.required: ${MAIL_STARTTLS_REQUIRED:false}
       # HELO/EHLO name announced to the SMTP server. Defaults to the local hostname, which on Docker is
       # the container id (leaks into the Received header). A neutral logical name avoids that.
       mail.smtp.localhost: ${MAIL_LOCALHOST:mini-eshop}
@@ -81,26 +85,10 @@ management:
     web:
       exposure:
         # 'loggers' is write-capable (runtime log-level changes) and the management port has no
-        # auth — keep it off the exposed set. Log export goes through OTLP, not this endpoint.
+        # auth — keep it off the exposed set.
         include: health, metrics
   endpoint:
     health:
       # No security on the management context, so 'always' would leak DB/Redis internals to anyone
       # who can reach :8081. 'when_authorized' degrades to a bare {status} for unauthenticated callers.
       show-details: when_authorized
-  tracing:
-    sampling:
-      probability: 1.0
-  otlp:
-    metrics:
-      export:
-        url: http://${OTEL_HOST:localhost}:4318/v1/metrics
-  opentelemetry:
-    tracing:
-      export:
-        otlp:
-          endpoint: http://${OTEL_HOST:localhost}:4318/v1/traces
-    logging:
-      export:
-        otlp:
-          endpoint: http://${OTEL_HOST:localhost}:4318/v1/logs
