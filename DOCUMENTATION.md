@@ -96,8 +96,9 @@ cites the real source location (`path:line`).
 | `nginx/Dockerfile` | nginx image build. |
 | `deployments/` (`docker-compose*.yml`) + `Makefile` | Service orchestration (nginx, backend, postgres, redis, mail): base stack plus dev/prod overlays, driven by `make up`/`dev`/`prod`. |
 | `db/migration/V1__schema.sql` | Tables: `users`, `products`, `orders`, `order_lines`. |
-| `db/migration/V2__seed.sql` | Seed data. |
+| `db/migration/V2__seed.sql` | Product seed data (via Flyway). |
 | `db/migration/V3__cart.sql` | `carts` / `cart_items` tables. |
+| `scripts/seed-users.sql` | Manual demo-user seed (`alice`/`bob`), applied via `make seed` — not run by Flyway. |
 
 ---
 

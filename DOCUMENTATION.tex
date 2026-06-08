@@ -314,8 +314,9 @@ session στο \textbf{Redis} (Spring Session), και οι επιβεβαιωμ
     \code{nginx/Dockerfile} & Build εικόνας nginx. \\
     \code{deployments/} (\code{docker-compose*.yml}) + \code{Makefile} & Ενορχήστρωση υπηρεσιών (nginx, backend, postgres, redis, mail): base stack συν dev/prod overlays, με targets \code{make up/dev/prod}. \\
     \code{db/migration/V1\_\_schema.sql} & Πίνακες: \code{users}, \code{products}, \code{orders}, \code{order\_lines}. \\
-    \code{db/migration/V2\_\_seed.sql} & Δεδομένα seed. \\
+    \code{db/migration/V2\_\_seed.sql} & Seed δεδομένων προϊόντων (μέσω Flyway). \\
     \code{db/migration/V3\_\_cart.sql} & Πίνακες \code{carts} / \code{cart\_items}. \\
+    \code{scripts/seed-users.sql} & Χειροκίνητο seed των demo χρηστών (\code{alice}/\code{bob}), εφαρμόζεται μέσω \code{make seed}· δεν εκτελείται από το Flyway. \\
     \bottomrule
 \end{longtable}
 
