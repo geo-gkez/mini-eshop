@@ -147,7 +147,9 @@
     \item \textbf{Redis} --- αποθήκευση session (Spring Session).
 \end{itemize}
 
-Η εφαρμογή εκτελείται μέσω \code{make up} (τα compose files βρίσκονται στο \code{deployments/}· αναλυτικές οδηγίες στο \code{README.md}).
+Η εφαρμογή εκτελείται με την εντολή \code{make up}, που χτίζει τα images και ανεβάζει όλα τα
+containers μέσω Docker Compose· τα compose files βρίσκονται στο \code{deployments/}, με αναλυτικές
+οδηγίες στο \code{README.md}.
 
 Η Εικόνα~\ref{fig:arch} δίνει τη συνολική εικόνα. Κάθε
 αίτημα ταξιδεύει από το \textbf{browser} (Vue SPA) μέσω του \textbf{nginx} --- που τερματίζει το
