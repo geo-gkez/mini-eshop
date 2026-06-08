@@ -1,0 +1,555 @@
+% ============================================================================
+% mini-eshop — Τεκμηρίωση (Εργασία 3: Ασφαλές Ηλεκτρονικό Κατάστημα)
+% Πανεπιστήμιο Πειραιώς — Ασφάλεια Λογισμικού
+% Compile with XeLaTeX:
+%   xelatex DOCUMENTATION.tex   (run twice for the table of contents)
+% ============================================================================
+\documentclass[11pt,a4paper]{article}
+
+% --- Encoding & Fonts (XeLaTeX) ---
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{greek}
+\setotherlanguage{english}
+\setmainfont{Linux Libertine O}
+\setsansfont{TeX Gyre Heros}
+\setmonofont[Scale=0.85]{DejaVu Sans Mono}
+
+% --- Page Layout ---
+\usepackage[top=3cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+
+% --- Graphics ---
+\usepackage{graphicx}
+\graphicspath{{./}}
+
+% --- Tables (page-breaking via longtable) ---
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\renewcommand{\arraystretch}{1.2}
+% Two-column "File / Responsibility" layout reused across section 1
+\newcolumntype{L}{>{\raggedright\arraybackslash}p{0.34\textwidth}}
+\newcolumntype{R}{>{\raggedright\arraybackslash}p{0.60\textwidth}}
+
+% --- Colors ---
+\usepackage[table]{xcolor}
+\definecolor{uniblue}{HTML}{003366}
+\definecolor{codebg}{HTML}{F5F5F5}
+\definecolor{codegreen}{HTML}{2e7d32}
+\definecolor{rowstripe}{HTML}{EEF1F6}
+
+% --- Headers/Footers ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Πανεπιστήμιο Πειραιώς\\ \small Τμήμα Πληροφορικής}
+\fancyhead[R]{\includegraphics[height=1cm]{unipi-footpage.png}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+\setlength{\headheight}{1.2cm}
+
+% --- Captions ---
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf, skip=6pt, labelsep=period}
+\captionsetup[figure]{name=Εικόνα}
+
+% --- TikZ (architecture diagram) ---
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta}
+
+% --- Misc ---
+\usepackage{enumitem}
+\usepackage{etoolbox}
+\usepackage{float}
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage[htt]{hyphenat} % allow long \texttt identifiers to hyphenate/wrap
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+
+% Long monospace identifiers (file paths, camelCase method names) tend to overflow the
+% right margin; loosen the line breaker and shrink the wide tables one step.
+\setlength{\emergencystretch}{3em}
+\AtBeginEnvironment{longtable}{\small\rowcolors{2}{rowstripe}{white}}
+
+% Start each main section on a new page
+\pretocmd{\section}{\clearpage}{}{}
+
+% --- Hyperlinks ---
+\usepackage{xurl}
+\usepackage[colorlinks=true,
+            linkcolor=uniblue,
+            urlcolor=uniblue,
+            citecolor=uniblue,
+            bookmarks=true,
+            pdftitle={mini-eshop — Tekmiriosi},
+            pdfauthor={Georgios Gkezeris},
+            pdfsubject={MSc — Software Security — Assignment 3}]{hyperref}
+
+% Shorthand for code/file references
+\newcommand{\code}[1]{\texttt{#1}}
+
+% ============================================================================
+\begin{document}
+
+% --- Title Page ---
+\begin{titlepage}
+    \centering
+    \thispagestyle{empty}
+
+    \vspace*{1.5cm}
+
+    {\Large\textbf{ΠΑΝΕΠΙΣΤΗΜΙΟ ΠΕΙΡΑΙΩΣ}}\\[0.3cm]
+    {\large Τμήμα Πληροφορικής}
+
+    \vspace{1.5cm}
+
+    \includegraphics[width=5cm]{unipi-logo.png}
+
+    \vspace{1.5cm}
+
+    {\large Εργασία Μαθήματος \textit{Ασφάλεια Λογισμικού}}
+
+    \vspace{1.5cm}
+
+    \begin{tabular}{|p{6cm}|p{8cm}|}
+        \hline
+        Τίτλος Εργασίας &
+        Εργασία 3: Ανάπτυξη Ηλεκτρονικού Καταστήματος (\textbf{mini-eshop}) \\
+        \hline
+        Όνομα φοιτητή -- Αρ.\ Μητρώου & Γεώργιος Γκεζέρης -- ΜΠΚΕΔ2509 \\
+        \hline
+        Ημερομηνία παράδοσης & Ιούνιος 2026 \\
+        \hline
+    \end{tabular}
+
+    \vfill
+\end{titlepage}
+
+% --- Table of Contents ---
+\newpage
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section*{Εισαγωγή}
+\addcontentsline{toc}{section}{Εισαγωγή}
+
+Το \textbf{mini-eshop} είναι ένα ασφαλές ηλεκτρονικό κατάστημα, σχεδιασμένο με άμυνα σε βάθος
+(defense in depth) σε κάθε στρώμα. Tech stack:
+
+\begin{itemize}[leftmargin=2em, itemsep=2pt, topsep=3pt, parsep=0pt]
+    \item \textbf{Spring Boot 4} --- REST backend.
+    \item \textbf{Vue 3 / Vuetify} --- SPA frontend.
+    \item \textbf{nginx} --- τερματισμός TLS, reverse proxy, εξυπηρέτηση στατικών αρχείων.
+    \item \textbf{PostgreSQL} --- μόνιμη αποθήκευση δεδομένων (Flyway migrations).
+    \item \textbf{Redis} --- αποθήκευση session (Spring Session).
+\end{itemize}
+
+Η εφαρμογή εκτελείται μέσω \code{make up} (τα compose files βρίσκονται στο \code{deployments/}· αναλυτικές οδηγίες στο \code{README.md}).
+
+Η Εικόνα~\ref{fig:arch} δίνει τη συνολική εικόνα. Κάθε
+αίτημα ταξιδεύει από το \textbf{browser} (Vue SPA) μέσω του \textbf{nginx} --- που τερματίζει το
+TLS, προσθέτει τα security headers/CSP, εφαρμόζει edge rate-limiting και κάνει reverse proxy ---
+προς το \textbf{Spring Boot backend}. Εκεί περνά πρώτα από το \code{SecurityFilterChain}
+(εξουσιοδότηση, CSRF, session) και κατόπιν στους controllers ανά τομέα (\code{auth}, \code{catalog},
+\code{cart}, \code{order}), οι οποίοι καλούν τα αντίστοιχα services και repositories. Η μόνιμη
+κατάσταση αποθηκεύεται στην \textbf{PostgreSQL} (σχήμα και δεδομένα μέσω Flyway), τα δεδομένα του
+session στο \textbf{Redis} (Spring Session), και οι επιβεβαιωμένες παραγγελίες ειδοποιούν τον
+διαχειριστή μέσω SMTP.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=7mm,
+    layer/.style={rectangle, rounded corners=3pt, draw=uniblue, very thick, fill=uniblue!8,
+                  text width=12.5cm, align=center, font=\small, inner sep=5pt},
+    store/.style={rectangle, rounded corners=3pt, draw=codegreen, thick, fill=codegreen!10,
+                  text width=3.4cm, align=center, font=\footnotesize, inner sep=4pt, minimum height=1cm},
+    arr/.style={-Stealth, semithick, draw=gray}
+]
+    \node[layer] (browser) {\textbf{Browser --- Vue 3 / Vuetify SPA}\\[2pt]
+        \scriptsize \code{fetch} + \code{X-XSRF-TOKEN} · αδιαφανές \code{SESSION} cookie};
+    \node[layer, below=of browser] (nginx) {\textbf{nginx}\\[2pt]
+        \scriptsize TLS termination · HTTP $\rightarrow$ HTTPS · CSP / security headers · edge rate-limit · reverse proxy};
+    \node[layer, below=of nginx] (backend) {\textbf{Spring Boot backend}\\[2pt]
+        \scriptsize \code{SecurityFilterChain} $\rightarrow$ Controllers (\code{auth}/\code{catalog}/\code{cart}/\code{order}) $\rightarrow$ Services $\rightarrow$ Repositories};
+    \node[store, below=14mm of backend] (redis) {\textbf{Redis}\\ Spring Session};
+    \node[store, left=10mm of redis] (pg) {\textbf{PostgreSQL}\\ Flyway};
+    \node[store, right=10mm of redis] (mail) {\textbf{SMTP}\\ Mailpit (dev)};
+
+    \draw[arr] (browser) -- (nginx) node[midway, right, font=\scriptsize] {HTTPS};
+    \draw[arr] (nginx) -- (backend) node[midway, right, font=\scriptsize] {ιδιωτικό δίκτυο};
+    \draw[arr] (backend) -- (pg);
+    \draw[arr] (backend) -- (redis);
+    \draw[arr] (backend) -- (mail);
+\end{tikzpicture}
+\caption{Συνολική αρχιτεκτονική του mini-eshop και η ροή ενός αιτήματος, από το browser ως τα data stores.}
+\label{fig:arch}
+\end{figure}
+
+Το παρόν έγγραφο απαντά στα οκτώ σημεία τεκμηρίωσης που ζητά η εκφώνηση. Κάθε αναφορά
+τεκμηριώνεται με παραπομπή στην αντίστοιχη θέση του πηγαίου κώδικα (\code{path:line}).
+
+% ============================================================================
+\section{Λειτουργικότητα κάθε αρχείου πηγαίου κώδικα}
+\label{sec:files}
+
+Οι πίνακες που ακολουθούν περιγράφουν τη λειτουργικότητα κάθε αρχείου, ομαδοποιημένοι κατά πακέτο.
+
+\subsection{Backend --- \texttt{auth/} (αυθεντικοποίηση, login, rate limiting)}
+\begin{longtable}{@{}L R@{}}
+    \toprule
+    \textbf{Αρχείο} & \textbf{Λειτουργικότητα} \\
+    \midrule
+    \code{AuthController.java} & REST endpoints για login: \code{POST /api/auth/login} (rate-limit $\rightarrow$ αυθεντικοποίηση $\rightarrow$ ανανέωση του session ID $\rightarrow$ αποθήκευση του security context) και \code{GET /api/auth/me} (επιστρέφει τον τρέχοντα χρήστη· η ανάλυση του \code{CsrfToken} εξαναγκάζει την εγγραφή του cookie \code{XSRF-TOKEN}). \\
+    \code{AppUser\allowbreak{}DetailsService.java} & \code{UserDetailsService} --- φορτώνει χρήστη με το δοθέν username από τη βάση· ρίχνει \code{Username\allowbreak{}NotFoundException} αν δεν υπάρχει. \\
+    \code{AppUser.java} & JPA entity για τον πίνακα \code{users} (username, \code{password\_hash}, όνομα, email). \\
+    \code{AppUserRepository.\allowbreak{}java} & Spring Data repository: \code{findByUsername}. \\
+    \code{LoginRateLimiter.java} & Throttling login βασισμένο σε Redis: μετρητές αποτυχιών ανά username και ανά IP με κυλιόμενο παράθυρο. \\
+    \code{LoginRateLimit\allowbreak{}Properties.\allowbreak{}java} & Typed config (\code{app.login-rate-limit}): κατώφλια + παράθυρο. \\
+    \code{LoginRequest.java} / \code{UserInfo.java} & DTOs αιτήματος / απάντησης login. \\
+    \code{CurrentUser.java} & Annotation \code{@CurrentUser} $\rightarrow$ εισάγει τον αυθεντικοποιημένο principal στα ορίσματα των controllers. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Backend --- \texttt{catalog/} (κατάλογος προϊόντων \& αναζήτηση)}
+\begin{longtable}{@{}L R@{}}
+    \toprule
+    \textbf{Αρχείο} & \textbf{Λειτουργικότητα} \\
+    \midrule
+    \code{CatalogController.java} & \code{GET /api/products} --- σελιδοποιημένη λίστα + προαιρετικός όρος \code{search} (\code{@Size(max=100)}). \\
+    \code{CatalogService.java} & Επιλέγει μεταξύ «όλα τα προϊόντα» και «αναζήτηση κατά όνομα»· αντιστοιχίζει σε \code{ProductSummary}. \\
+    \code{ProductRepository.\allowbreak{}java} & Spring Data queries: \code{findBy\allowbreak{}Name\allowbreak{}Containing\allowbreak{}IgnoreCase}, \code{findByReference}. \\
+    \code{Product.java} & JPA entity για \code{products} (περιλαμβάνει UUID \code{reference}, τιμή, νόμισμα). \\
+    \code{ProductSummary.java} / \code{CatalogResponse.java} & DTOs μόνο για ανάγνωση (δεν εκθέτουν ποτέ το αριθμητικό id της βάσης· χρησιμοποιούν το \code{reference}). \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Backend --- \texttt{cart/} (καλάθι στον server)}
+\begin{longtable}{@{}L R@{}}
+    \toprule
+    \textbf{Αρχείο} & \textbf{Λειτουργικότητα} \\
+    \midrule
+    \code{CartController.java} & \code{POST /api/cart/items}, προβολή/ενημέρωση/αφαίρεση --- το καλάθι ζει στον server, συνδεδεμένο με τον χρήστη. \\
+    \code{CartService.java} & Επιχειρησιακοί κανόνες καλαθιού: εύρεση προϊόντος μέσω \code{reference}, προσθήκη/ενημέρωση ποσότητας, επιβολή policy. \\
+    \code{CartEntity.java} / \code{CartItemEntity.java} & JPA entities (\code{carts}, \code{cart\_items}). \textbf{Τα items αποθηκεύουν μόνο \code{productReference} + \code{quantity} --- ποτέ τιμή.} \\
+    \code{CartRepository.\allowbreak{}java} & \code{findByUser\_Id}. \\
+    \code{CartPolicy.java} & Όρια (μέγιστα διακριτά είδη / μέγιστη ποσότητα). \\
+    \code{AddItemRequest} / \code{UpdateItemRequest} / \code{CartItem} / \code{CartResponse} & DTOs καλαθιού. \\
+    \code{CartFullException} / \code{CartItemQuantityException} & Εξαιρέσεις domain $\rightarrow$ αντιστοιχίζονται σε 4xx. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Backend --- \texttt{order/} (ολοκλήρωση παραγγελίας, review, email διαχειριστή)}
+\begin{longtable}{@{}L R@{}}
+    \toprule
+    \textbf{Αρχείο} & \textbf{Λειτουργικότητα} \\
+    \midrule
+    \code{OrderController.java} & \code{POST /api/order/submit} (δημιουργία review) και \code{POST /api/order/confirm} (οριστικοποίηση παραγγελίας). \\
+    \code{OrderService.java} & Ξαναδιαβάζει τις τιμές από τη βάση κατά το submit (αποτροπή price-tampering), αποθηκεύει παραγγελία \code{PENDING}, στο confirm την σημειώνει confirmed και δημοσιεύει event. \\
+    \code{OrderEmailSender.java} & Μετά το commit, στέλνει την παραγγελία με email στον διαχειριστή (απλό κείμενο, \code{SimpleMailMessage}). \\
+    \code{ShippingAddress.java} & DTO διεύθυνσης με validation, περιλαμβάνει προστασία CRLF --- άμυνα έναντι email-header-injection. \\
+    \code{OrderReview.java} / \code{OrderLine.java} & Payload review + τιμή ανά γραμμή (η τιμή λαμβάνεται από το entity \code{Product}, όχι από τον client). \\
+    \code{OrderEntity.java} / \code{OrderLineEntity.java} & JPA entities (\code{orders}, \code{order\_lines}). \\
+    \code{OrderRepository.\allowbreak{}java} & \code{findByUser\_IdAndStatus}. \\
+    \code{OrderConfirmedEvent.java} & Event που δημοσιεύεται μετά το commit της συναλλαγής checkout. \\
+    \code{OrderProperties.java} & Typed config: διευθύνσεις email διαχειριστή/αποστολέα (validated \code{@Email}). \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Backend --- \texttt{config/} (ασφάλεια, session, web, observability)}
+\begin{longtable}{@{}L R@{}}
+    \toprule
+    \textbf{Αρχείο} & \textbf{Λειτουργικότητα} \\
+    \midrule
+    \code{SecurityConfig.java} & Η αλυσίδα φίλτρων ασφαλείας: εξουσιοδότηση (default-deny), CSRF (\code{.spa()}), session concurrency, logout, password encoder, \code{AuthenticationManager}, στρατηγική session-authentication. \\
+    \code{SessionConfig.java} & Serializer session για Redis --- JSON (όχι JDK), περιορισμένος από \code{PolymorphicTypeValidator}. \\
+    \code{SessionProperties.java} & Typed config: absolute timeout του session. \\
+    \code{AbsoluteSessionTimeout\allowbreak{}Interceptor.java} & Ακυρώνει session παλαιότερο του απόλυτου ορίου, ανεξαρτήτως δραστηριότητας. \\
+    \code{JsonAuthHandlers.java} & \code{AuthenticationEntryPoint} + \code{AccessDeniedHandler} $\rightarrow$ JSON 401/403 (χωρίς redirects για το SPA). \\
+    \code{ProblemDetailWriter.java} & Γράφει απαντήσεις JSON \code{ProblemDetail} (RFC-9457). \\
+    \code{Global\allowbreak{}ExceptionHandler.\allowbreak{}java} & Αντιστοιχίζει εξαιρέσεις σε απαντήσεις· συμπτύσσει όλες τις \code{Authentication\allowbreak{}Exception} σε γενικό 401. \\
+    \code{WebConfig.java} & Καταχωρεί τον interceptor absolute-timeout και τον resolver ορίσματος \code{@CurrentUser}. \\
+    \code{SecurityEventLogger.java} & Δομημένη καταγραφή των events επιτυχίας/αποτυχίας αυθεντικοποίησης του Spring Security. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Backend --- \texttt{shared/} \& σημείο εισόδου}
+\begin{longtable}{@{}L R@{}}
+    \toprule
+    \textbf{Αρχείο} & \textbf{Λειτουργικότητα} \\
+    \midrule
+    \code{EshopApplication.java} & Σημείο εισόδου Spring Boot. \\
+    \code{shared/LogFields.java} & Σταθερές για κλειδιά/events δομημένης καταγραφής. \\
+    \code{shared/PageMeta.java} & DTO μεταδεδομένων σελιδοποίησης. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Frontend (\texttt{frontend/src/})}
+\begin{longtable}{@{}L R@{}}
+    \toprule
+    \textbf{Αρχείο} & \textbf{Λειτουργικότητα} \\
+    \midrule
+    \code{App.vue} & Κέλυφος + εναλλαγή προβολών SPA (Login / Catalog / Cart / Order)· badge καλαθιού στο app-bar· χειρισμός \code{auth:expired}. \\
+    \code{views/LoginView.vue} & Φόρμα login $\rightarrow$ \code{POST /auth/login}. \\
+    \code{views/CatalogView.vue} & Πλέγμα προϊόντων, αναζήτηση, ένδειξη «όλα vs αποτελέσματα αναζήτησης», add-to-cart, και \code{<v-footer>} με σύνοψη πλήθους καλαθιού. \\
+    \code{views/CartView.vue} & Προβολή περιεχομένων καλαθιού. \\
+    \code{views/OrderView.vue} & Μηχανή βημάτων checkout: φόρμα διεύθυνσης $\rightarrow$ review $\rightarrow$ ολοκλήρωση (χωρίς αλλαγή σελίδας). \\
+    \code{api/client.js} & Wrapper \code{fetch}: εισάγει το header CSRF στα mutating αιτήματα, χειρίζεται 401 $\rightarrow$ \code{auth:expired}. \\
+    \code{main.js} / \code{plugins/vuetify.js} & Bootstrap εφαρμογής και ρύθμιση Vuetify. \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Υποδομή \& βάση δεδομένων}
+\begin{longtable}{@{}L R@{}}
+    \toprule
+    \textbf{Αρχείο} & \textbf{Λειτουργικότητα} \\
+    \midrule
+    \code{nginx/nginx.conf} & Τερματισμός TLS, ανακατεύθυνση HTTP$\rightarrow$HTTPS, security headers/CSP, edge rate limiting, reverse proxy στο backend, SPA fallback. \\
+    \code{nginx/gen-cert.sh} & Παράγει το self-signed πιστοποιητικό. \\
+    \code{nginx/Dockerfile} & Build εικόνας nginx. \\
+    \code{deployments/} (\code{docker-compose*.yml}) + \code{Makefile} & Ενορχήστρωση υπηρεσιών (nginx, backend, postgres, redis, mail): base stack συν dev/prod overlays, με targets \code{make up/dev/prod}. \\
+    \code{db/migration/V1\_\_schema.sql} & Πίνακες: \code{users}, \code{products}, \code{orders}, \code{order\_lines}. \\
+    \code{db/migration/V2\_\_seed.sql} & Δεδομένα seed. \\
+    \code{db/migration/V3\_\_cart.sql} & Πίνακες \code{carts} / \code{cart\_items}. \\
+    \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Διαχείριση δεδομένων συνόδου (session)}
+\label{sec:session}
+
+Η αυθεντικοποίηση βασίζεται σε \textbf{stateful, server-side session} με υπόβαθρο
+\textbf{Spring Session + Redis}: το state του session (το \code{SecurityContext}) αποθηκεύεται στον
+server, στο Redis, ενώ ο browser κρατά μόνο ένα αδιαφανές session cookie με όνομα
+\textbf{\code{SESSION}} που το αναφέρει. Δεν χρησιμοποιείται JWT (stateless token).
+
+\textbf{Παραγωγή \& ανανέωση (rotation) του session ID.} Το login δεν χρησιμοποιεί ενσωματωμένο filter· το \code{formLogin} και το \code{httpBasic} είναι απενεργοποιημένα (\code{SecurityConfig.java:103-104}).
+Έτσι, το \code{AuthController.login} καλεί \textbf{ρητά} τη \code{SessionAuthenticationStrategy}
+(\code{AuthController.java:52}), η οποία είναι μια \code{CompositeSessionAuthenticationStrategy}
+(\code{SecurityConfig.java:164-173}) που εκτελεί, με τη σειρά:
+\begin{enumerate}[leftmargin=2em]\setlength\itemsep{1pt}
+    \item \code{ConcurrentSessionControlAuthenticationStrategy} --- επιβάλλει το όριο του ενός session·
+    \item \code{ChangeSessionIdAuthenticationStrategy} --- \textbf{ανανεώνει (rotation) το session ID
+          κατά το login (άμυνα έναντι session-fixation)}·
+    \item \code{RegisterSessionAuthenticationStrategy} --- καταχωρεί το νέο session.
+\end{enumerate}
+Το ίδιο το session ID παράγεται από τον servlet container / Spring Session (κρυπτογραφικά τυχαίο),
+όχι από κώδικα της εφαρμογής.
+
+\textbf{Χαρακτηριστικά cookie} (\code{application.yml:57-63}): \code{http-only: true},
+\code{secure: true}, \code{same-site: strict}. Έτσι το cookie δεν διαβάζεται από JavaScript,
+στέλνεται μόνο μέσω HTTPS, και δεν επισυνάπτεται σε cross-site αιτήματα.
+
+\textbf{Λήξεις --- δύο ανεξάρτητα όρια:}
+\begin{itemize}[leftmargin=2em]\setlength\itemsep{1pt}
+    \item \textbf{Idle timeout 15m} --- \code{server.servlet.session.timeout: 15m}
+          (\code{application.yml:63})· επανεκκινεί με τη δραστηριότητα.
+    \item \textbf{Absolute timeout 8h} --- \code{app.session.absolute-timeout: 8h}
+          (\code{application.yml:5}), επιβάλλεται από το \code{AbsoluteSessionTimeoutInterceptor.java:37-42},
+          που ακυρώνει session παλαιότερο του ορίου \textbf{ανεξαρτήτως δραστηριότητας} (περιορίζει την
+          αξία ενός κλεμμένου cookie).
+\end{itemize}
+
+\textbf{Ταυτόχρονα sessions.} Το \code{maximumSessions(1)} (\code{SecurityConfig.java:75-87}) με ένα
+\code{SpringSession\allowbreak{}Backed\allowbreak{}SessionRegistry} (\code{SecurityConfig.java:153-157}, απαιτεί το indexed
+Redis repository, \code{application.yml:21-27}). Η δημιουργία ενός δεύτερου session \textbf{οδηγεί στον τερματισμό του παλαιότερου}· το επόμενο
+αίτημα εκείνου λαμβάνει 401 (\code{SecurityConfig.java:86}).
+
+\textbf{Logout} (\code{SecurityConfig.java:90-102}): το \code{POST /api/auth/logout} ακυρώνει το
+session και εκπέμπει \code{Clear-Site-Data: cookies}.
+
+\textbf{Serialization.} Τα δεδομένα του session αποθηκεύονται στο Redis ως \textbf{JSON, όχι
+JDK-serialized} (\code{SessionConfig.java:20-23}), και η αποσειριοποίηση περιορίζεται από έναν
+\code{Basic\allowbreak{}Polymorphic\allowbreak{}TypeValidator} σε συνδυασμό με τα Jackson modules του Spring Security
+(\code{SessionConfig.java:25-32}) --- κλείνοντας την επιφάνεια επίθεσης deserialization-gadget.
+
+% ============================================================================
+\section{Αποτροπή επιθέσεων user enumeration στη σελίδα Login}
+\label{sec:enumeration}
+
+Η απάντηση του login είναι \textbf{πανομοιότυπη είτε υπάρχει το username είτε όχι}, σε τρεις άξονες:
+
+\begin{enumerate}[leftmargin=2em]\setlength\itemsep{3pt}
+    \item \textbf{Ίδιο σφάλμα, ίδιο status.} Το \code{AppUser\allowbreak{}DetailsService} ρίχνει
+          \code{Username\allowbreak{}NotFoundException} για άγνωστο χρήστη (\code{AppUser\allowbreak{}DetailsService.java:22-25}).
+          Ο τυπικός \code{Dao\allowbreak{}AuthenticationProvider} (\code{SecurityConfig.java:128}) διατηρεί το
+          \code{hide\allowbreak{}UserNotFound\allowbreak{}Exceptions} στην \textbf{προεπιλογή \code{true}}, οπότε ο άγνωστος
+          χρήστης αναφέρεται ως \code{Bad\allowbreak{}CredentialsException} --- η ίδια εξαίρεση με τον λανθασμένο
+          κωδικό. Στη συνέχεια το \code{Global\allowbreak{}ExceptionHandler.\allowbreak{}java:20-28} αντιστοιχίζει \textbf{κάθε}
+          \code{Authentication\allowbreak{}Exception} σε γενικό \code{401 Unauthorized} ProblemDetail χωρίς
+          διακριτική λεπτομέρεια. (Πρόκειται για την προεπιλογή του framework, όχι για ρητή ρύθμιση
+          μέσω setter.)
+    \item \textbf{Σχεδόν σταθερός χρόνος απόκρισης.} Ο ίδιος τυπικός provider εκτελεί \textbf{εικονικό
+          υπολογισμό hash κωδικού όταν ο χρήστης δεν βρεθεί} (\code{mitigate\allowbreak{}AgainstTimingAttack} του
+          Spring), ώστε «ανύπαρκτος χρήστης» και «λάθος κωδικός» να διαρκούν συγκρίσιμο χρόνο --- κανένα
+          timing oracle.
+    \item \textbf{Η απόκριση 429 δεν αποκαλύπτει την ύπαρξη λογαριασμού.} Ο \code{LoginRateLimiter} ελέγχεται \textbf{πριν}
+          την αυθεντικοποίηση (\code{AuthController.java:38}) και, σε αποτυχία, αυξάνει \textbf{και τους
+          δύο} μετρητές (ανά username και ανά IP) \textbf{συμμετρικά --- ανεξαρτήτως αν υπάρχει το
+          username} (\code{LoginRateLimiter.java:43-45}, καλείται από \code{AuthController.java:62}).
+          Επομένως ο επιτιθέμενος δεν μπορεί να διακρίνει πραγματικά από ψεύτικα usernames μέσω της
+          συμπεριφοράς throttling. Κατώφλια: 10/username, 20/IP, παράθυρο 15 λεπτών
+          (\code{LoginRateLimit\allowbreak{}Properties.\allowbreak{}java:13-15}).
+\end{enumerate}
+
+% ============================================================================
+\section{Προστασία των κωδικών χρηστών στη βάση δεδομένων}
+\label{sec:passwords}
+
+Οι κωδικοί αποθηκεύονται \textbf{μόνο ως hashes Argon2id}, ποτέ σε καθαρό κείμενο ή αναστρέψιμη μορφή.
+
+\begin{itemize}[leftmargin=2em]\setlength\itemsep{2pt}
+    \item \textbf{Encoder} (\code{SecurityConfig.java:142-150}): ένας \code{DelegatingPasswordEncoder}
+          με προεπιλεγμένο id \code{argon2@SpringSecurity\_v5\_8}, με υπόβαθρο
+          \code{Argon2PasswordEncoder.\allowbreak{}defaultsFor\allowbreak{}SpringSecurity\_v5\_8()}. Πρόκειται για τις
+          \textbf{προεπιλεγμένες παραμέτρους Argon2id του Spring Security v5.8} (δεν ορίστηκαν
+          προσαρμοσμένες memory/iterations/parallelism). Το πρόθεμα \code{\{argon2@SpringSecurity\_v5\_8\}}
+          σε κάθε αποθηκευμένο hash καθιστά εφικτή μελλοντική αναβάθμιση αλγορίθμου χωρίς να θιγούν οι
+          υπάρχουσες εγγραφές.
+    \item \textbf{Αποθήκευση} (\code{db/migration/V1\_\_schema.sql:4}):
+          \code{password\_hash VARCHAR(255) NOT NULL}. Ο αλγόριθμος Argon2 ενσωματώνει τυχαίο salt σε κάθε παραγόμενο hash (μέσα
+          στην κωδικοποιημένη συμβολοσειρά), οπότε δεν χρειάζεται ξεχωριστή στήλη salt.
+    \item \textbf{Επαλήθευση}: το login περνά από τον \code{Dao\allowbreak{}AuthenticationProvider}
+          (\code{SecurityConfig.java:128-129}), που καλεί \code{Password\allowbreak{}Encoder.\allowbreak{}matches(raw, storedHash)}
+          --- ο ακατέργαστος κωδικός γίνεται hash και συγκρίνεται· το αποθηκευμένο hash δεν
+          αποκρυπτογραφείται ποτέ.
+\end{itemize}
+
+% ============================================================================
+\section{Παράμετροι SQL και προστασία από SQL injection}
+\label{sec:sqli}
+
+\textbf{Κάθε} ερώτημα στη βάση είναι ένα \textbf{Spring Data derived query} (ερώτημα βάσει ονόματος
+μεθόδου). \textbf{Δεν χρησιμοποιούνται χειροκίνητα γραμμένα SQL ερωτήματα, ούτε \code{@Query}, ούτε native queries} σε κανένα
+repository --- οπότε το Spring Data / Hibernate παράγει \textbf{παραμετροποιημένα prepared statements}
+και δεσμεύει κάθε τιμή· τα δεδομένα που προέρχονται από τον χρήστη δεν ενσωματώνονται ποτέ απευθείας στο κείμενο του SQL ερωτήματος.
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth} >{\raggedright\arraybackslash}p{0.30\textwidth} >{\raggedright\arraybackslash}p{0.37\textwidth}@{}}
+    \toprule
+    \textbf{Repository (file:line)} & \textbf{Μέθοδος / παράμετρος} & \textbf{Τρόπος δέσμευσης / ασφάλεια} \\
+    \midrule
+    \code{AppUserRepository.\allowbreak{}java:8} & \code{findByUsername(String)} --- login \code{username} & δεσμευμένη παράμετρος σε derived query \\
+    \code{ProductRepository.\allowbreak{}java:12} & \code{findBy\allowbreak{}Name\allowbreak{}Containing\allowbreak{}IgnoreCase} --- όρος \code{search} (\code{@Size(max=100)}) & δεσμευμένη παράμετρος \code{LIKE}· το \code{\%...\%} το προσθέτει το Hibernate, όχι string concat \\
+    \code{ProductRepository.\allowbreak{}java:14} & \code{findByReference(UUID)} --- product \code{reference} & τύπου \code{UUID}· μη-UUID είσοδος απορρίπτεται πριν εκτελεστεί οποιοδήποτε ερώτημα \\
+    \code{CartRepository.\allowbreak{}java:9} & \code{findByUser\_Id(Long)} --- \code{userId} από τον principal (όχι είσοδος αιτήματος) & δεσμευμένη παράμετρος \\
+    \code{OrderRepository.\allowbreak{}java:9} & \code{findByUser\_IdAndStatus(Long, String)} --- \code{userId} από principal· το \code{status} είναι η σταθερά εφαρμογής \code{"PENDING"} (\code{OrderService.java:26,59,76}), ποτέ είσοδος αιτήματος & δεσμευμένες παράμετροι \\
+    \bottomrule
+\end{longtable}
+
+Έτσι, οι μόνες τιμές \textbf{από αίτημα χρήστη} που φτάνουν στην SQL είναι το \textbf{username του
+login}, ο \textbf{όρος αναζήτησης}, και το \textbf{product reference (UUID)} --- όλες δεσμευμένες ως
+παράμετροι prepared-statement.
+
+% ============================================================================
+\section{Προστασία από CSRF}
+\label{sec:csrf}
+
+Η προστασία CSRF είναι \textbf{ενεργοποιημένη} μέσω του preset SPA του Spring Security:
+\code{.csrf(\allowbreak{}Csrf\allowbreak{}Configurer::spa)} (\code{SecurityConfig.java:89}). Αυτό ρυθμίζει:
+\begin{itemize}[leftmargin=2em]\setlength\itemsep{1pt}
+    \item ένα \code{CookieCsrfTokenRepository} --- το token παραδίδεται στον browser σε αναγνώσιμο
+          cookie \code{XSRF-TOKEN}, και
+    \item έναν \code{SpaCsrfTokenRequestHandler} --- ο server περιμένει το token πίσω στο header
+          \code{X-XSRF-TOKEN} (το κλασικό μοτίβο double-submit-cookie για SPAs).
+\end{itemize}
+
+\textbf{Πλευρά frontend} (\code{api/client.js:1-25}): για κάθε αίτημα εκτός GET/HEAD, ο client
+διαβάζει το cookie \code{XSRF-TOKEN} και στέλνει την τιμή του ως header \code{X-XSRF-TOKEN}· αν το
+token λείπει, αρνείται να στείλει το αίτημα. Το \code{GET /api/auth/me} αναλύει όρισμα
+\code{CsrfToken} (\code{AuthController.java:68-69}) ειδικά για να εξαναγκάσει την (επαν)έκδοση του
+cookie.
+
+\textbf{Γιατί είναι ασφαλές παρότι το cookie XSRF είναι αναγνώσιμο από JavaScript:} ένας cross-site
+επιτιθέμενος \textbf{δεν μπορεί να διαβάσει} το cookie \code{XSRF-TOKEN} του θύματος (Same-Origin
+Policy) και άρα δεν μπορεί να θέσει το αντίστοιχο header \code{X-XSRF-TOKEN}. Η άμυνα ενισχύεται από
+το ότι το session cookie είναι \code{SameSite=strict} (\code{application.yml:62}), που ήδη εμποδίζει
+τον browser να επισυνάπτει credentials σε cross-site αιτήματα. Τα mutating endpoints είναι μόνο POST,
+οπότε απλό CSRF μέσω \code{GET} δεν μπορεί να τα ενεργοποιήσει.
+
+% ============================================================================
+\section{Προστασία από XSS (ποια λειτουργικότητα και ποια μέτρα)}
+\label{sec:xss}
+
+\textbf{Σε κάθε σημείο όπου προβάλλονται δεδομένα προερχόμενα από χρήστες ή από τη βάση δεδομένων} --- τα αποτελέσματα καταλόγου/αναζήτησης, το
+καλάθι, και η οθόνη review παραγγελίας (\code{CatalogView.vue}, \code{CartView.vue},
+\code{OrderView.vue}) --- η έξοδος προστατεύεται από:
+
+\begin{enumerate}[leftmargin=2em]\setlength\itemsep{3pt}
+    \item \textbf{Αυτόματο escaping του framework.} Όλο το δυναμικό περιεχόμενο χρησιμοποιεί text
+          interpolation του Vue (\code{\{\{ \}\}} / \code{v-text}), που κάνει HTML-escape από προεπιλογή.
+          \textbf{Δεν υπάρχει \code{v-html} πουθενά στο frontend} (επαληθεύτηκε:
+          \verb|grep -rn "v-html" frontend/src| $\rightarrow$ δεν βρέθηκε καμία αντιστοιχία), οπότε δεν υπάρχει sink
+          ακατέργαστης HTML.
+    \item \textbf{Content-Security-Policy + headers θωράκισης} (\code{nginx/nginx.conf:47-53}), σε κάθε
+          απάντηση: \code{default-src 'self'}, \code{script-src 'self'} (καμία inline/απομακρυσμένη
+          script· μπλοκάρει injected \code{<script>}), \code{object-src 'none'}, \code{base-uri 'self'},
+          \code{frame-ancestors 'none'}, \code{upgrade-insecure-requests}, καθώς και
+          \code{X-Content-Type-Options: nosniff} και \code{X-Frame-Options: DENY}. (Το \code{style-src}
+          επιτρέπει \code{'unsafe-inline'} μόνο επειδή το Vuetify εισάγει styles κατά την εκτέλεση ---
+          \textbf{δεν} επιτρέπει inline scripts.)
+    \item \textbf{Έξοδος προς το email διαχειριστή --- άμυνα header-injection.} Το email παραγγελίας
+          είναι το μόνο σημείο όπου δεδομένα χρήστη φεύγουν από το web context. Τα πεδία διεύθυνσης
+          αποστολής επικυρώνονται με \verb|@Pattern(regexp = "^[^\r\n]*$")| και στα τέσσερα πεδία
+          (\code{order/ShippingAddress.java:8-11}), αποτρέποντας CR/LF email-header injection, και το
+          \textbf{θέμα} του email καθαρίζεται επιπλέον από CR/LF (\code{OrderEmailSender.java:75,85-87}).
+          Το σώμα του email είναι απλό κείμενο, όχι HTML, οπότε δεν αποτελεί sink HTML-XSS.
+\end{enumerate}
+
+% ============================================================================
+\section{Σημαντικά ρίσκα χωρίς υλοποιημένο μέτρο προστασίας}
+\label{sec:risks}
+
+Πρόκειται για γνωστά και συνειδητά αποδεκτά υπολειπόμενα ρίσκα ασφαλείας, τα οποία καταγράφονται ρητά αντί να αγνοούνται:
+
+\begin{enumerate}[leftmargin=2em]\setlength\itemsep{3pt}
+    \item \textbf{Η μεταφορά του email παραγγελίας δεν επιβάλλει TLS στο προεπιλεγμένο (dev) προφίλ.} Το
+          email προς τον διαχειριστή είναι απλό κείμενο \code{SimpleMailMessage}
+          (\code{OrderEmailSender.java:52-78}). Στο προεπιλεγμένο προφίλ ο προορισμός είναι το τοπικό
+          dev sink \textbf{Mailpit}, που δεν διαθέτει TLS, οπότε η μεταφορά δεν κρυπτογραφείται ---
+          εκ σχεδιασμού για την επίδειξη. Το προφίλ \code{prod} (\code{application-prod.yml}, ενεργό
+          μέσω \code{make prod}) \textbf{επιβάλλει} \code{mail.smtp.auth=true} και
+          \code{mail.smtp.starttls.required=true}, ώστε η εφαρμογή να \emph{αρνείται} να στείλει αν ο
+          SMTP server δεν διαπραγματευτεί TLS. Το υπολειπόμενο ρίσκο περιορίζεται έτσι στο dev προφίλ.
+    \item \textbf{Χωρίς κλείδωμα λογαριασμού / CAPTCHA.} Η άμυνα brute-force είναι μόνο rate-limiting
+          (\code{LoginRateLimiter}) συν τα edge limits του nginx. Δεν υπάρχει διαρκές κλείδωμα
+          λογαριασμού ή πρόκληση επαλήθευσης ανθρώπου, οπότε μια αργή κατανεμημένη επίθεση κάτω από τα
+          κατώφλια δεν σταματά.
+    \item \textbf{Edge case \code{INCR}/\code{EXPIRE} του rate-limiter.} Μια κατάρρευση ανάμεσα στο
+          Redis \code{INCR} και το \code{EXPIRE} θα μπορούσε να αφήσει μετρητή χωρίς TTL (ήδη σημειωμένο
+          στο \code{LoginRateLimiter.java}). Αποδεκτό για το single-instance εύρος· χωρίς θωράκιση.
+    \item \textbf{Self-signed πιστοποιητικό.} Σύμφωνα με την εκφώνηση, το TLS χρησιμοποιεί αυτο-παραγόμενο
+          πιστοποιητικό (\code{nginx/gen-cert.sh}), που δεν είναι CA-trusted --- οι browsers
+          προειδοποιούν, και δεν προστατεύει από ενεργό MITM που παρουσιάζει δικό του μη-έμπιστο cert το
+          οποίο ο χρήστης αποδέχεται.
+    \item \textbf{Παραδοχές single-instance.} Ορισμένοι μηχανισμοί υποθέτουν μία instance backend· η
+          οριζόντια κλιμάκωση θα χρειαζόταν επανεξέταση (το Redis ήδη βοηθά, αλλά δεν έγινε load-test).
+    \item \textbf{Δεν χρησιμοποιείται WAF ούτε μηχανισμός προστασίας από αυτοματοποιημένες επιθέσεις} σε
+          ορισμένες μη-mutating επιφάνειες --- εκτός εύρους για αυτή την εργασία, αλλά αξίζει να αναφερθεί.
+\end{enumerate}
+
+% ============================================================================
+\section*{Παράρτημα --- εκτέλεση της εφαρμογής}
+\addcontentsline{toc}{section}{Παράρτημα --- εκτέλεση της εφαρμογής}
+
+Η εφαρμογή τρέχει σε containers μέσω Docker Compose, με βοηθητικό \code{Makefile}. Συνοπτικά
+βήματα (πλήρεις οδηγίες στο \code{README.md}):
+
+\begin{enumerate}[leftmargin=2em]\setlength\itemsep{2pt}
+    \item \code{cp .env.example .env} και συμπλήρωση των \code{DB\_PASSWORD} / \code{REDIS\_PASSWORD}.
+    \item \code{make certs} --- παραγωγή του self-signed πιστοποιητικού.
+    \item \code{make up} --- build και εκκίνηση του stack: nginx (443, self-signed), backend,
+          PostgreSQL (Flyway migrations + seed \emph{προϊόντων}), Redis, και τοπικό mail sink Mailpit.
+    \item \code{make seed} --- φόρτωση των demo χρηστών (\code{alice}/\code{alicepass},
+          \code{bob}/\code{bobpass})· \textbf{δεν} δημιουργούνται από το Flyway.
+\end{enumerate}
+
+Πλοηγηθείτε στο \url{https://mini-eshop.local/} (αποδεχτείτε το self-signed cert) και συνδεθείτε με
+έναν από τους demo λογαριασμούς.
+
+Το \code{make} δεν είναι απαραίτητο --- κάθε target αντιστοιχεί σε μία εντολή \code{docker compose}
+(ο πίνακας αντιστοιχίας βρίσκεται στο \code{README.md}).
+
+\end{document}
