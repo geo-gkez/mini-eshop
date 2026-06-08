@@ -7,8 +7,7 @@ that emails the shop administrator. Built with defense-in-depth at every layer.
 proxy, static hosting) · PostgreSQL (Flyway) · Redis (Spring Session). Everything runs in
 containers via Docker Compose, driven by a `Makefile`.
 
-> Security documentation (the 8 required points) is in [`DOCUMENTATION.pdf`](DOCUMENTATION.pdf)
-> (source: `DOCUMENTATION.tex` / `DOCUMENTATION.md`).
+> Security documentation (the 8 required points) is in [`DOCUMENTATION.md`](DOCUMENTATION.md)
 
 ---
 
