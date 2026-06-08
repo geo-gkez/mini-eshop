@@ -8,6 +8,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CERT_DIR="$SCRIPT_DIR/certs"
 
+# The certs dir is git-ignored, so it won't exist on a fresh clone — create it.
+mkdir -p "$CERT_DIR"
+
 if [ -f "$CERT_DIR/server.crt" ] && [ -f "$CERT_DIR/server.key" ]; then
     echo "Certificates already exist in $CERT_DIR — delete them first to regenerate."
     exit 0
