@@ -151,8 +151,8 @@ The login response is **identical whether the username exists or not**, on three
    (`SecurityConfig.java:128`) keeps **`hideUserNotFoundExceptions` at its default `true`**, so an
    unknown user is reported as `BadCredentialsException` — the same exception as a wrong password.
    `GlobalExceptionHandler.java:20-28` then maps **every** `AuthenticationException` to a generic
-   `401 Unauthorized` ProblemDetail with no distinguishing detail. *(We rely on the framework
-   default here rather than an explicit setter — noted for honesty.)*
+   `401 Unauthorized` ProblemDetail with no distinguishing detail. *(This is the framework default,
+   not an explicit setter.)*
 
 2. **Constant-time-ish response.** The same stock provider performs a **dummy password hash when
    the user is not found** (Spring's `mitigateAgainstTimingAttack`), so "no such user" and "wrong
