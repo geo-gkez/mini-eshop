@@ -1,12 +1,17 @@
 # mini-eshop — Documentation
 
-secure e-shop. Stack: **Spring Boot 4** (REST backend) · **Vue 3 / Vuetify** SPA ·
-**nginx** (TLS termination + reverse proxy + static host) · **PostgreSQL** (Flyway) · **Redis**
-(Spring Session). The app is run with the `make up` command, which builds the images and starts all
+Secure e-shop. 
+Stack: 
+- **Spring Boot 4** (REST backend) 
+- **Vue 3 / Vuetify** SPA ·
+- **nginx** (TLS termination + reverse proxy + static host) 
+- **PostgreSQL** (Flyway)
+- **Redis** (Spring Session). 
+
+The app is run with the `make up` command, which builds the images and starts all
 containers via Docker Compose; the compose files live in `deployments/`, full instructions in `README.md`.
 
-This document answers the eight documentation points required by the assignment. Every claim
-cites the real source location (`path:line`).
+Every claim cites the real source location (`path:line`).
 
 ---
 
