@@ -1,7 +1,8 @@
 # mini-eshop — Documentation
 
 Secure e-shop. 
-Stack: 
+
+**Stack**: 
 - **Spring Boot 4** (REST backend) 
 - **Vue 3 / Vuetify** SPA ·
 - **nginx** (TLS termination + reverse proxy + static host) 
