@@ -31,8 +31,8 @@ dev: ## Start the stack + dev UIs (RedisInsight, pgAdmin)
 prod: ## Start the stack with the real-email (prod) profile — needs SMTP vars in .env
 	$(COMPOSE_PROD) up -d --build
 
-down: ## Stop the stack
-	$(COMPOSE) down
+down: ## Stop the stack (also removes dev-only UIs if running)
+	$(COMPOSE) down --remove-orphans
 
 logs: ## Tail backend logs
 	$(COMPOSE) logs -f backend
@@ -41,4 +41,4 @@ ps: ## Show service status
 	$(COMPOSE) ps
 
 clean: ## Stop and remove volumes (DESTROYS Postgres + Redis data)
-	$(COMPOSE) down -v
+	$(COMPOSE) down -v --remove-orphans

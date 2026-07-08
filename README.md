@@ -1,13 +1,21 @@
 # mini-eshop
 
-A secure e-shop (Assignment 3): authenticated product catalog, cart, and an order/checkout flow
-that emails the shop administrator. Built with defense-in-depth at every layer.
+A secure e-shop: authenticated product catalog, cart, and an order/checkout flow that emails the
+shop administrator. Built with defense-in-depth at every layer.
 
-**Stack:** Spring Boot 4 (REST backend) · Vue 3 / Vuetify (SPA) · nginx (TLS termination, reverse
-proxy, static hosting) · PostgreSQL (Flyway) · Redis (Spring Session). Everything runs in
-containers via Docker Compose, driven by a `Makefile`.
+**Stack**
 
-> Security documentation (the 8 required points) is in [`DOCUMENTATION.md`](DOCUMENTATION.md)
+| Layer | Technology |
+|-------|------------|
+| Backend | Spring Boot 4 (REST API) |
+| Frontend | Vue 3 / Vuetify (SPA) |
+| Edge | nginx (TLS termination, reverse proxy, static hosting) |
+| Database | PostgreSQL (Flyway migrations) |
+| Sessions | Redis (Spring Session) |
+
+Everything runs in containers via Docker Compose, driven by a `Makefile`.
+
+> Security documentation is in [`DOCUMENTATION.md`](DOCUMENTATION.md)
 
 ---
 

@@ -1,13 +1,13 @@
 # mini-eshop — Documentation
 
-Secure e-shop. 
+Secure e-shop.
 
-**Stack**: 
-- **Spring Boot 4** (REST backend) 
-- **Vue 3 / Vuetify** SPA ·
-- **nginx** (TLS termination + reverse proxy + static host) 
-- **PostgreSQL** (Flyway)
-- **Redis** (Spring Session). 
+**Stack:**
+- **Spring Boot 4** — REST backend
+- **Vue 3 / Vuetify** — SPA frontend
+- **nginx** — TLS termination, reverse proxy, static host
+- **PostgreSQL** — persistence (Flyway migrations)
+- **Redis** — Spring Session store
 
 The app is run with the `make up` command, which builds the images and starts all
 containers via Docker Compose; the compose files live in `deployments/`, full instructions in `README.md`.
@@ -276,15 +276,16 @@ These are known, conscious residual risks — acknowledged rather than silently 
 3. **Rate-limiter `INCR`/`EXPIRE` edge case.** A crash between the Redis `INCR` and `EXPIRE` could
    leave a counter without a TTL (already noted in `LoginRateLimiter.java`). Acceptable for the
    single-instance scope; not hardened.
-4. **Self-signed certificate.** Per the assignment, TLS uses a self-generated certificate
+4. **Self-signed certificate.** For local deployment, TLS uses a self-generated certificate
    (`nginx/gen-cert.sh`), which is not CA-trusted — browsers warn, and it does not protect against
-   an active MITM who can present their own untrusted cert that a user clicks through.
+   an active MITM who can present their own untrusted cert that a user clicks through. A public
+   deployment would use a CA-signed certificate (e.g. Let's Encrypt via ACME).
 5. **Single-instance assumptions.** Some controls (the in-memory-style session/rate-limit reasoning)
    assume one backend instance; horizontal scaling would need review (Redis already helps, but this
    was not load-tested).
 6. **No app-level anti-automation on read endpoints, and no WAF.** Beyond the nginx edge limits,
    read surfaces (e.g. catalog/search) have no application-level throttling, and there is no WAF —
-   out of scope for this assignment but worth stating.
+   out of scope for this project but worth stating.
 
 ---
 
