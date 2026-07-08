@@ -90,8 +90,8 @@ build contexts and `.env` resolve from the repo root:
 | `make seed` | `docker compose --project-directory . -f deployments/docker-compose.yml exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < scripts/seed-users.sql` |
 | `make dev` | same as `up`, with `-f deployments/docker-compose.dev.yml` added before `up` |
 | `make prod` | same as `up`, with `-f deployments/docker-compose.prod.yml` added before `up` |
-| `make down` | `docker compose --project-directory . -f deployments/docker-compose.yml down` |
-| `make clean` | `docker compose --project-directory . -f deployments/docker-compose.yml down -v` |
+| `make down` | `docker compose --project-directory . -f deployments/docker-compose.yml down --remove-orphans` |
+| `make clean` | `docker compose --project-directory . -f deployments/docker-compose.yml down -v --remove-orphans` |
 
 (Docker Engine + Compose v2 and `openssl` are still required; `make` is not.)
 
